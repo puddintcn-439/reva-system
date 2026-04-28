@@ -1,6 +1,6 @@
 {
-  "experimentalServices": [
-    { "src": "./frontend" },
-    { "src": "./backend" }
-  ]
+  "experimentalServices": {
+    "frontend": { "src": "./frontend" },
+    "backend":  { "src": "./backend" }
+  }
 }
