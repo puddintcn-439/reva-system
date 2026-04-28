@@ -80,30 +80,30 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Swagger UI
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'H.U.N API Docs',
 }));
-app.get('/api/docs.json', (req, res) => {
+app.get('/docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/consignments', consignmentRoutes);
-app.use('/api/settlements', settlementRoutes);
-app.use('/api/locations', locationRoutes);
-app.use('/api/announcements', announcementRoutes);
-app.use('/api/purchases', purchaseRoutes);
-app.use('/api/consignors', consignorRoutes);
-app.use('/api/pos', posRoutes);
-app.use('/api/email', emailRoutes);
-app.use('/api/banks', bankRoutes);
-app.use('/api/system-settings', systemSettingsRoutes);
+app.use('/auth', authRoutes);
+app.use('/products', productRoutes);
+app.use('/consignments', consignmentRoutes);
+app.use('/settlements', settlementRoutes);
+app.use('/locations', locationRoutes);
+app.use('/announcements', announcementRoutes);
+app.use('/purchases', purchaseRoutes);
+app.use('/consignors', consignorRoutes);
+app.use('/pos', posRoutes);
+app.use('/email', emailRoutes);
+app.use('/banks', bankRoutes);
+app.use('/system-settings', systemSettingsRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
