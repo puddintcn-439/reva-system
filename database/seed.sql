@@ -109,8 +109,8 @@ ON CONFLICT DO NOTHING;
 -- Sau khi login, đổi password ngay qua trang Mật khẩu
 -- ----------------------------------------------------------------
 INSERT INTO users (username, password, full_name, email, role) VALUES
-  ('admin',  '$2b$10$rQZ9uAVQXzQb8FxPmzNWxOqRRESmh.2TByMoJlVRrEFR1Jx0tPYAm', 'Admin REVA',    'admin@reva.vn',  'superadmin'),
-  ('staff1', '$2b$10$rQZ9uAVQXzQb8FxPmzNWxOqRRESmh.2TByMoJlVRrEFR1Jx0tPYAm', 'Nhân Viên 1',   'staff1@reva.vn', 'staff')
+  ('admin',  '$2a$10$W0DsyQ.b3Viw3FBnrCztN.Sf5nErXBZhqbBX26HgV9Gtjb5.6ea7e', 'Admin REVA',    'admin@reva.vn',  'superadmin'),
+  ('staff1', '$2a$10$W0DsyQ.b3Viw3FBnrCztN.Sf5nErXBZhqbBX26HgV9Gtjb5.6ea7e', 'Nhân Viên 1',   'staff1@reva.vn', 'staff')
 ON CONFLICT (username) DO NOTHING;
 
 -- ----------------------------------------------------------------
