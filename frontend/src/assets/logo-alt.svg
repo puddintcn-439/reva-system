@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 60" width="160" height="60" aria-labelledby="title3 desc3">
+  <title id="title3">REVA alternate</title>
+  <desc id="desc3">Compact horizontal wordmark with gold accent.</desc>
+  <defs>
+    <linearGradient id="goldAlt" x1="0" x2="1">
+      <stop offset="0%" stop-color="#E2C07B" />
+      <stop offset="100%" stop-color="#B8872A" />
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="none"/>
+  <g>
+    <text x="10" y="40" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="600" fill="#3B2B2A">REVA</text>
+    <rect x="128" y="14" width="12" height="12" rx="2" stroke="url(#goldAlt)" stroke-width="1.6" fill="none"/>
+  </g>
+</svg>

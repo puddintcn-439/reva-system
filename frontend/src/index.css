@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-hun-cream text-hun-black font-sans antialiased;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 rounded-none bg-hun-black text-white
+           text-sm font-medium tracking-wider uppercase transition-all duration-200
+           hover:bg-hun-brown active:scale-95;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center px-6 py-3 border border-hun-black text-hun-black
+           text-sm font-medium tracking-wider uppercase transition-all duration-200
+           hover:bg-hun-black hover:text-white active:scale-95;
+  }
+  .section-title {
+    @apply font-serif text-3xl md:text-4xl font-semibold text-hun-black;
+  }
+  .card {
+    @apply bg-white border border-hun-beige rounded-none p-6;
+  }
+  .form-input {
+    @apply w-full border border-hun-beige rounded-none px-4 py-2.5 text-sm
+           focus:outline-none focus:border-hun-black transition-colors bg-white;
+  }
+  .form-label {
+    @apply block text-xs font-medium tracking-wider uppercase text-gray-500 mb-1.5;
+  }
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full;
+  }
+}
+
+/* Ticker animation */
+.ticker-track {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker 30s linear infinite;
+}
+.ticker-track:hover { animation-play-state: paused; }
+
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f5f0eb; }
+::-webkit-scrollbar-thumb { background: #c9a84c; border-radius: 3px; }

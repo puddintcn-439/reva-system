@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="80" height="80" aria-labelledby="title2 desc2">
+  <title id="title2">REVA mark</title>
+  <desc id="desc2">Circular gold monogram mark matching sample.</desc>
+  <defs>
+    <linearGradient id="goldMark" x1="0" x2="1">
+      <stop offset="0%" stop-color="#E6C785" />
+      <stop offset="100%" stop-color="#B8872A" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="46" fill="#FFF8F2" stroke="#B8872A" stroke-width="2" />
+  <circle cx="50" cy="50" r="34" fill="url(#goldMark)" opacity="0.14" />
+  <text x="50%" y="56%" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="44" fill="url(#goldMark)" font-weight="700">R</text>
+  <path d="M44 62 L50 68 L56 62 L50 58 Z" fill="url(#goldMark)" opacity="0.95"/>
+</svg>

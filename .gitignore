@@ -1,0 +1,21 @@
+# Environment secrets — KHÔNG bao giờ commit
+backend/.env
+backend/.env.production
+backend/.env.local
+
+# Dependencies
+node_modules/
+
+# Build
+frontend/dist/
+
+# Uploads (user-generated content)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

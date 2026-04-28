@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#7b541d"/>
+      <stop offset="24%"  stop-color="#b8872a"/>
+      <stop offset="50%"  stop-color="#e3c07b"/>
+      <stop offset="72%"  stop-color="#cb9d46"/>
+      <stop offset="100%" stop-color="#8b6221"/>
+    </linearGradient>
+    <radialGradient id="bg" cx="30%" cy="20%" r="80%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.98"/>
+      <stop offset="40%"  stop-color="#f7f0e8" stop-opacity="0.96"/>
+      <stop offset="100%" stop-color="#e8ddd2" stop-opacity="0.82"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect x="2" y="2" width="60" height="60" rx="16" ry="16" fill="url(#bg)" stroke="url(#g)" stroke-width="1.5" stroke-opacity="0.5"/>
+
+  <!-- Inner border -->
+  <rect x="6" y="6" width="52" height="52" rx="12" ry="12" fill="none" stroke="white" stroke-width="0.8" stroke-opacity="0.5"/>
+
+  <!-- Top decorative line -->
+  <line x1="14" y1="10" x2="44" y2="10" stroke="url(#g)" stroke-width="0.8" stroke-opacity="0.7"/>
+
+  <!-- R monogram -->
+  <text
+    x="32" y="44"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="34"
+    font-weight="600"
+    text-anchor="middle"
+    fill="url(#g)"
+  >R</text>
+
+  <!-- Sparkle bottom-right -->
+  <path d="M52 48 L53.2 51.8 L57 53 L53.2 54.2 L52 58 L50.8 54.2 L47 53 L50.8 51.8 Z" fill="url(#g)" opacity="0.85"/>
+</svg>

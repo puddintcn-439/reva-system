@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /consign
+Allow: /buy
+Allow: /contact
+Allow: /sales
+
+# Block admin area from crawlers
+Disallow: /admin/
+
+Sitemap: https://reva.vn/sitemap.xml

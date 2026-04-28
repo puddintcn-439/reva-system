@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" width="420" height="120" aria-labelledby="title desc">
+  <title id="title">REVA — H.U.N Consignment</title>
+  <desc id="desc">Gold monogram and serif wordmark inspired by the provided sample.</desc>
+  <defs>
+    <linearGradient id="goldGrad" x1="0" x2="1">
+      <stop offset="0%" stop-color="#C9A05A" />
+      <stop offset="50%" stop-color="#E2C07B" />
+      <stop offset="100%" stop-color="#B8872A" />
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="none"/>
+
+  <!-- Mark (left) -->
+  <g transform="translate(12,8)">
+    <text x="0" y="70" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700" fill="url(#goldGrad)">R</text>
+    <!-- small diamond/star -->
+    <path d="M46 66 L50 70 L46 74 L42 70 Z" fill="#C9A05A" transform="translate(2,-10)" opacity="0.95"/>
+  </g>
+
+  <!-- Wordmark (right) -->
+  <g transform="translate(120,56)">
+    <text x="0" y="8" font-family="Georgia, 'Times New Roman', serif" font-size="36" font-weight="600" fill="url(#goldGrad)" letter-spacing="6">REVA</text>
+  </g>
+</svg>
