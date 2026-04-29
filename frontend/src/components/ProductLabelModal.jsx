@@ -13,7 +13,7 @@ function Label({ product, codeType, mode }) {
   if (mode === 'mini') {
     return (
       <div className="label-card label-mini">
-        <div className="mini-shop">H.U.N Thanh Lý Ký Gửi</div>
+        <div className="mini-shop">REVA Thanh Lý Ký Gửi</div>
         <div className="mini-name">{product.name}</div>
         {product.category_name && <div className="mini-meta">{product.category_name} {product.condition_percent != null ? `· ${product.condition_percent}%` : ''}</div>}
         <div className="mini-price">{fmt(product.sale_price)}</div>
@@ -40,7 +40,7 @@ function Label({ product, codeType, mode }) {
         <div className="label-code">{product.code || '—'}</div>
       </div>
       <div className="label-right">
-        <div className="label-shop">H.U.N Thanh Lý Ký Gửi</div>
+        <div className="label-shop">REVA Thanh Lý Ký Gửi</div>
         <div className="label-name">{product.name}</div>
         {product.category_name && <div className="label-meta">{product.category_name}</div>}
         {product.condition_percent != null && <div className="label-meta">Độ mới: {product.condition_percent}%</div>}

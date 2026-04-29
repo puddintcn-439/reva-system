@@ -216,19 +216,19 @@ ON CONFLICT (username) DO NOTHING;
 -- ----------------------------------------------------------------
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-001') AND status='approved') THEN
+  IF NOT EXISTS (SELECT 1 FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-001' LIMIT 1) AND status='approved') THEN
     INSERT INTO consignment_requests (consignor_id, request_type, status, location_id, scheduled_date, notes)
     VALUES (
-      (SELECT id FROM consignors WHERE code='HUN-001'),
-      'direct', 'approved', (SELECT id FROM locations WHERE name='HSSV Trường Chinh'), CURRENT_DATE - INTERVAL '18 days', 'Yêu cầu ký gửi mẫu demo HUN-001'
+      (SELECT id FROM consignors WHERE code='HUN-001' LIMIT 1),
+      'direct', 'approved', (SELECT id FROM locations WHERE name='HSSV Trường Chinh' LIMIT 1), CURRENT_DATE - INTERVAL '18 days', 'Yêu cầu ký gửi mẫu demo HUN-001'
     );
   END IF;
 
-  IF NOT EXISTS (SELECT 1 FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-002') AND status='active') THEN
+  IF NOT EXISTS (SELECT 1 FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-002' LIMIT 1) AND status='active') THEN
     INSERT INTO consignment_requests (consignor_id, request_type, status, location_id, scheduled_date, notes)
     VALUES (
-      (SELECT id FROM consignors WHERE code='HUN-002'),
-      'online', 'active', (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh'), CURRENT_DATE - INTERVAL '10 days', 'Yêu cầu ký gửi online demo HUN-002'
+      (SELECT id FROM consignors WHERE code='HUN-002' LIMIT 1),
+      'online', 'active', (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh' LIMIT 1), CURRENT_DATE - INTERVAL '10 days', 'Yêu cầu ký gửi online demo HUN-002'
     );
   END IF;
 END $$;
@@ -239,45 +239,45 @@ END $$;
 INSERT INTO products (request_id, consignor_id, location_id, category_id, name, description, condition_percent, sale_price, commission_amount, consignor_amount, image_url, status, code, consign_start, consign_end)
 VALUES
 (
-  (SELECT id FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-001') LIMIT 1),
-  (SELECT id FROM consignors WHERE code='HUN-001'),
-  (SELECT id FROM locations WHERE name='HSSV Trường Chinh'),
-  (SELECT id FROM categories WHERE slug='quan-ao-nu'),
+  (SELECT id FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-001' LIMIT 1) LIMIT 1),
+  (SELECT id FROM consignors WHERE code='HUN-001' LIMIT 1),
+  (SELECT id FROM locations WHERE name='HSSV Trường Chinh' LIMIT 1),
+  (SELECT id FROM categories WHERE slug='quan-ao-nu' LIMIT 1),
   'Áo khoác nữ Zara size M', 'Áo khoác Zara, tình trạng tốt, size M', 90, 700000, 140000, 560000, NULL, 'active', 'RV-0001', CURRENT_DATE - INTERVAL '17 days', CURRENT_DATE + INTERVAL '43 days'
 ),
 (
-  (SELECT id FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-002') LIMIT 1),
-  (SELECT id FROM consignors WHERE code='HUN-002'),
-  (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh'),
-  (SELECT id FROM categories WHERE slug='tui-xach'),
+  (SELECT id FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-002' LIMIT 1) LIMIT 1),
+  (SELECT id FROM consignors WHERE code='HUN-002' LIMIT 1),
+  (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh' LIMIT 1),
+  (SELECT id FROM categories WHERE slug='tui-xach' LIMIT 1),
   'Túi LV second-hand', 'Túi LV authentic, có vết xước nhẹ', 85, 3500000, 1050000, 2450000, NULL, 'active', 'RV-0002', CURRENT_DATE - INTERVAL '12 days', CURRENT_DATE + INTERVAL '48 days'
 ),
 (
-  (SELECT id FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-003') LIMIT 1),
-  (SELECT id FROM consignors WHERE code='HUN-003'),
-  (SELECT id FROM locations WHERE name='HSSV Dịch Vọng Hậu'),
-  (SELECT id FROM categories WHERE slug='giay-dep'),
+  (SELECT id FROM consignment_requests WHERE consignor_id = (SELECT id FROM consignors WHERE code='HUN-003' LIMIT 1) LIMIT 1),
+  (SELECT id FROM consignors WHERE code='HUN-003' LIMIT 1),
+  (SELECT id FROM locations WHERE name='HSSV Dịch Vọng Hậu' LIMIT 1),
+  (SELECT id FROM categories WHERE slug='giay-dep' LIMIT 1),
   'Giày Nike Air 42', 'Giày Nike Air, size 42, like new', 95, 1200000, 300000, 900000, NULL, 'active', 'RV-0003', CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '45 days'
 ),
 (
   NULL,
-  (SELECT id FROM consignors WHERE code='HUN-001'),
-  (SELECT id FROM locations WHERE name='HSSV Trường Chinh'),
-  (SELECT id FROM categories WHERE slug='quan-ao-nu'),
+  (SELECT id FROM consignors WHERE code='HUN-001' LIMIT 1),
+  (SELECT id FROM locations WHERE name='HSSV Trường Chinh' LIMIT 1),
+  (SELECT id FROM categories WHERE slug='quan-ao-nu' LIMIT 1),
   'Đầm dạ hội vintage', 'Đầm dạ hội cổ điển, kích thước S', 88, 1500000, 300000, 1200000, NULL, 'active', 'RV-0004', CURRENT_DATE - INTERVAL '20 days', CURRENT_DATE + INTERVAL '40 days'
 ),
 (
   NULL,
-  (SELECT id FROM consignors WHERE code='HUN-002'),
-  (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh'),
-  (SELECT id FROM categories WHERE slug='my-pham'),
+  (SELECT id FROM consignors WHERE code='HUN-002' LIMIT 1),
+  (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh' LIMIT 1),
+  (SELECT id FROM categories WHERE slug='my-pham' LIMIT 1),
   'Set mỹ phẩm Chanel mini', 'Bộ mini Chanel, đầy đủ sản phẩm', 90, 2000000, 600000, 1400000, NULL, 'active', 'RV-0005', CURRENT_DATE - INTERVAL '8 days', CURRENT_DATE + INTERVAL '52 days'
 ),
 (
   NULL,
-  (SELECT id FROM consignors WHERE code='HUN-001'),
-  (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh'),
-  (SELECT id FROM categories WHERE slug='nuoc-hoa'),
+  (SELECT id FROM consignors WHERE code='HUN-001' LIMIT 1),
+  (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh' LIMIT 1),
+  (SELECT id FROM categories WHERE slug='nuoc-hoa' LIMIT 1),
   'Nước hoa Dior 50ml', 'Nước hoa Dior 50ml, gần đầy', 92, 3200000, 800000, 2400000, NULL, 'active', 'RV-0006', CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '55 days'
 )
 ON CONFLICT (code) DO NOTHING;
@@ -287,7 +287,7 @@ ON CONFLICT (code) DO NOTHING;
 -- ----------------------------------------------------------------
 INSERT INTO sales (invoice_code, customer_name, customer_phone, total_amount, discount_amount, final_amount, payment_method, note, location_id, created_by, created_at)
 VALUES (
-  'INV-2026-0001', 'Khách lẻ', '0909999999', 1900000, 0, 1900000, 'cash', 'Thanh toán trực tiếp', (SELECT id FROM locations WHERE name='HSSV Trường Chinh'), (SELECT id FROM users WHERE username='staff1'), NOW()
+  'INV-2026-0001', 'Khách lẻ', '0909999999', 1900000, 0, 1900000, 'cash', 'Thanh toán trực tiếp', (SELECT id FROM locations WHERE name='HSSV Trường Chinh' LIMIT 1), (SELECT id FROM users WHERE username='staff1' LIMIT 1), NOW()
 )
 ON CONFLICT (invoice_code) DO NOTHING;
 
@@ -297,11 +297,11 @@ BEGIN
   SELECT id INTO s_id FROM sales WHERE invoice_code='INV-2026-0001';
   IF s_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sale_items WHERE sale_id = s_id AND product_code = 'RV-0001') THEN
     INSERT INTO sale_items (sale_id, product_id, product_name, product_code, sale_price, commission_amount, consignor_amount, consignor_id)
-    VALUES (s_id, (SELECT id FROM products WHERE code='RV-0001'), 'Áo khoác nữ Zara size M', 'RV-0001', 700000, 140000, 560000, (SELECT id FROM consignors WHERE code='HUN-001'));
+    VALUES (s_id, (SELECT id FROM products WHERE code='RV-0001' LIMIT 1), 'Áo khoác nữ Zara size M', 'RV-0001', 700000, 140000, 560000, (SELECT id FROM consignors WHERE code='HUN-001' LIMIT 1));
   END IF;
   IF s_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM sale_items WHERE sale_id = s_id AND product_code = 'RV-0003') THEN
     INSERT INTO sale_items (sale_id, product_id, product_name, product_code, sale_price, commission_amount, consignor_amount, consignor_id)
-    VALUES (s_id, (SELECT id FROM products WHERE code='RV-0003'), 'Giày Nike Air 42', 'RV-0003', 1200000, 300000, 900000, (SELECT id FROM consignors WHERE code='HUN-003'));
+    VALUES (s_id, (SELECT id FROM products WHERE code='RV-0003' LIMIT 1), 'Giày Nike Air 42', 'RV-0003', 1200000, 300000, 900000, (SELECT id FROM consignors WHERE code='HUN-003' LIMIT 1));
   END IF;
 END $$;
 
@@ -313,7 +313,7 @@ UPDATE products SET status='sold', sold_at = (SELECT created_at FROM sales WHERE
 -- ----------------------------------------------------------------
 INSERT INTO settlements (consignor_id, code, period_start, period_end, total_sale, total_commission, total_payout, status, paid_at, notes, created_at, updated_at)
 VALUES (
-  (SELECT id FROM consignors WHERE code='HUN-001'), 'SETTLE-2026-0001', CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE, 700000, 140000, 560000, 'pending', NULL, 'Quyết toán mẫu cho HUN-001', NOW(), NOW()
+  (SELECT id FROM consignors WHERE code='HUN-001' LIMIT 1), 'SETTLE-2026-0001', CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE, 700000, 140000, 560000, 'pending', NULL, 'Quyết toán mẫu cho HUN-001', NOW(), NOW()
 )
 ON CONFLICT (code) DO NOTHING;
 
@@ -323,13 +323,13 @@ BEGIN
   SELECT id INTO sett_id FROM settlements WHERE code='SETTLE-2026-0001';
   IF sett_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM settlement_items WHERE settlement_id = sett_id AND product_code = 'RV-0001') THEN
     INSERT INTO settlement_items (settlement_id, product_id, product_name, product_code, sale_price, commission, consignor_amount)
-    VALUES (sett_id, (SELECT id FROM products WHERE code='RV-0001'), 'Áo khoác nữ Zara size M', 'RV-0001', 700000, 140000, 560000);
+    VALUES (sett_id, (SELECT id FROM products WHERE code='RV-0001' LIMIT 1), 'Áo khoác nữ Zara size M', 'RV-0001', 700000, 140000, 560000);
   END IF;
 END $$;
 
 INSERT INTO settlements (consignor_id, code, period_start, period_end, total_sale, total_commission, total_payout, status, paid_at, notes, created_at, updated_at)
 VALUES (
-  (SELECT id FROM consignors WHERE code='HUN-003'), 'SETTLE-2026-0002', CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE, 1200000, 300000, 900000, 'pending', NULL, 'Quyết toán mẫu cho HUN-003', NOW(), NOW()
+  (SELECT id FROM consignors WHERE code='HUN-003' LIMIT 1), 'SETTLE-2026-0002', CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE, 1200000, 300000, 900000, 'pending', NULL, 'Quyết toán mẫu cho HUN-003', NOW(), NOW()
 )
 ON CONFLICT (code) DO NOTHING;
 
@@ -339,7 +339,7 @@ BEGIN
   SELECT id INTO sett2 FROM settlements WHERE code='SETTLE-2026-0002';
   IF sett2 IS NOT NULL AND NOT EXISTS (SELECT 1 FROM settlement_items WHERE settlement_id = sett2 AND product_code = 'RV-0003') THEN
     INSERT INTO settlement_items (settlement_id, product_id, product_name, product_code, sale_price, commission, consignor_amount)
-    VALUES (sett2, (SELECT id FROM products WHERE code='RV-0003'), 'Giày Nike Air 42', 'RV-0003', 1200000, 300000, 900000);
+    VALUES (sett2, (SELECT id FROM products WHERE code='RV-0003' LIMIT 1), 'Giày Nike Air 42', 'RV-0003', 1200000, 300000, 900000);
   END IF;
 END $$;
 
@@ -348,14 +348,15 @@ END $$;
 -- ----------------------------------------------------------------
 INSERT INTO purchase_requests (full_name, phone, email, item_type, quantity_kg, description, status, admin_notes, location_id, created_at, updated_at)
 VALUES
-  ('Người mua A', '0911222333', 'buyerA@example.com', 'vải', 12.50, 'Cần thu mua vải cổ điển', 'pending', NULL, (SELECT id FROM locations WHERE name='HSSV Dịch Vọng Hậu'), NOW(), NOW()),
-  ('Người mua B', '0911333444', 'buyerB@example.com', 'đồng hồ', NULL, 'Tìm đồng hồ vintage', 'pending', NULL, (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh'), NOW(), NOW())
+  ('Người mua A', '0911222333', 'buyerA@example.com', 'vải', 12.50, 'Cần thu mua vải cổ điển', 'pending', NULL, (SELECT id FROM locations WHERE name='HSSV Dịch Vọng Hậu' LIMIT 1), NOW(), NOW()),
+  ('Người mua B', '0911333444', 'buyerB@example.com', 'đồng hồ', NULL, 'Tìm đồng hồ vintage', 'pending', NULL, (SELECT id FROM locations WHERE name='BRAND + HSSV Đào Duy Anh' LIMIT 1), NOW(), NOW())
 ;
 
 -- ----------------------------------------------------------------
 -- AUDIT LOG SAMPLE
 -- ----------------------------------------------------------------
 INSERT INTO audit_logs (user_id, username, action, resource, resource_id, details, ip_address)
-VALUES ((SELECT id FROM users WHERE username='admin'), 'admin', 'seed:insert', 'seed.sql', NULL, '{"note":"Initial comprehensive seed"}', '127.0.0.1');
+VALUES ((SELECT id FROM users WHERE username='admin' LIMIT 1), 'admin', 'seed:insert', 'seed.sql', NULL, '{"note":"Initial comprehensive seed"}', '127.0.0.1');
+
 
 

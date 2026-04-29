@@ -1,6 +1,6 @@
-# H.U.N - Thanh Lý Ký Gửi
+# REVA - Thanh Lý Ký Gửi
 
-Clone của website [hunthanhlykygui.com](https://hunthanhlykygui.com/) — Chuỗi cửa hàng ký gửi thời trang bền vững tại Hà Nội.
+Website — Chuỗi cửa hàng ký gửi thời trang bền vững tại Hà Nội.
 
 ## Tech Stack
 
@@ -19,7 +19,7 @@ Clone của website [hunthanhlykygui.com](https://hunthanhlykygui.com/) — Chu�
 | Trang | Mô tả |
 |-------|-------|
 | `/` | Trang chủ – giới thiệu dịch vụ, bảng phí |
-| `/about` | Về H.U.N – lịch sử, 3 cơ sở |
+| `/about` | Về REVA – lịch sử, 3 cơ sở |
 | `/consign` | Ký gửi – đăng ký ký gửi trực tiếp/online |
 | `/buy` | Thu mua – đăng ký thu mua |
 | `/contact` | Tìm cửa hàng – địa chỉ, hotline, giờ mở cửa |
@@ -40,7 +40,7 @@ Clone của website [hunthanhlykygui.com](https://hunthanhlykygui.com/) — Chu�
 
 ## Cấu trúc phí ký gửi
 
-| Giá bán | H.U.N nhận |
+| Giá bán | REVA nhận |
 |---------|-----------|
 | Dưới 60k | 20.000đ / sản phẩm |
 | 60k – 130k | 30.000đ / sản phẩm |
@@ -135,7 +135,7 @@ GET  /api/announcements          Thông báo ticker
 GET  /api/locations              Danh sách cơ sở
 GET  /api/products               Danh sách sản phẩm
 GET  /api/products/categories    Danh mục
-GET  /api/settlements/lookup?code=HUN-001  Tra cứu quyết toán
+GET  /api/settlements/lookup?code=REVA-001  Tra cứu quyết toán
 POST /api/consignments           Gửi yêu cầu ký gửi
 POST /api/purchases              Gửi yêu cầu thu mua
 ```
@@ -203,4 +203,4 @@ clothing-consignment/
 
 ---
 
-© 2026 H.U.N Thanh Lý Ký Gửi · Hà Nội
+© 2026 REVA Thanh Lý Ký Gửi · Hà Nội

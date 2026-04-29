@@ -1,7 +1,7 @@
 {
   "name": "hun-backend",
   "version": "1.0.0",
-  "description": "H.U.N Thanh Ly Ky Gui - Backend API",
+  "description": "REVA Thanh Ly Ky Gui - Backend API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
