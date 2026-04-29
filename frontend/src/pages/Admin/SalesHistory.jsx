@@ -230,7 +230,7 @@ async function downloadSalePdf(sale, bank) {
 // ── Main Component ─────────────────────────────────────────────────────────
 export default function SalesHistory() {
   const { user } = useAuth()
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin'
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
