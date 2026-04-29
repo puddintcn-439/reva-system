@@ -4,9 +4,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'H.U.N Thanh Lý Ký Gửi API',
+      title: 'R.E.V.A Thanh Lý Ký Gửi API',
       version: '1.0.0',
-      description: 'API cho hệ thống quản lý thanh lý ký gửi quần áo H.U.N',
+      description: 'API cho hệ thống quản lý thanh lý ký gửi quần áo R.E.V.A',
     },
     servers: [
       { url: 'http://localhost:5000', description: 'Development server' },

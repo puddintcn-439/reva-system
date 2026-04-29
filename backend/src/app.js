@@ -81,7 +81,7 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Swagger UI
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'H.U.N API Docs',
+  customSiteTitle: 'R.E.V.A API Docs',
 }));
 app.get('/docs.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');

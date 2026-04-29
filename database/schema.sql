@@ -1,5 +1,5 @@
 -- ================================================================
--- H.U.N / REVA Thanh Ly Ky Gui - Complete Database Schema
+-- REVA Thanh Ly Ky Gui - Complete Database Schema
 -- PostgreSQL — includes all migrations
 -- ================================================================
 

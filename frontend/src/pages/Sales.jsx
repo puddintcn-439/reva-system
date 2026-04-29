@@ -115,7 +115,7 @@ export default function Sales() {
                     <div className="grid grid-cols-3 divide-x divide-hun-beige">
                       {[
                         { label: 'Tổng bán được', value: fmt(s.total_sale) },
-                        { label: 'Phí H.U.N',     value: fmt(s.total_commission) },
+                        { label: 'Phí R.E.V.A',     value: fmt(s.total_commission) },
                         { label: 'Bạn nhận',       value: fmt(s.total_payout), bold: true },
                       ].map(({ label, value, bold }) => (
                         <div key={label} className="p-4 text-center">
@@ -172,7 +172,7 @@ export default function Sales() {
 
       <section className="py-12 bg-hun-cream border-t border-hun-beige text-center">
         <p className="text-sm text-gray-600 mb-4">Không tìm được mã? Liên hệ trực tiếp cửa hàng để được hỗ trợ.</p>
-        <Link to="/contact" className="btn-outline">Liên hệ H.U.N</Link>
+        <Link to="/contact" className="btn-outline">Liên hệ R.E.V.A</Link>
       </section>
     </div>
   )
