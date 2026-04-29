@@ -46,7 +46,17 @@ app.use(cors({
   origin: async (origin, callback) => {
     try {
       const allowed = await sysSettings.getAllowedOrigins();
-      if (!origin || allowed.includes(origin)) return callback(null, true);
+      if (!origin) return callback(null, true);
+      // Exact match OR wildcard pattern (e.g. https://*.vercel.app)
+      const isAllowed = allowed.some((pattern) => {
+        if (pattern === origin) return true;
+        if (pattern.includes('*')) {
+          const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '[^.]+') + '$');
+          return regex.test(origin);
+        }
+        return false;
+      });
+      if (isAllowed) return callback(null, true);
       callback(new Error(`CORS: origin ${origin} not allowed`));
     } catch {
       // If DB not ready yet (e.g. first boot), fall back to env

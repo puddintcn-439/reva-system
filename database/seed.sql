@@ -186,7 +186,7 @@ INSERT INTO system_settings (key, value, label, description, is_secret) VALUES
   ('smtp_user',   '',                      'SMTP Username',    'Địa chỉ email gửi',                                        TRUE),
   ('smtp_pass',   '',                      'SMTP Password',    'App Password (không phải mật khẩu đăng nhập Gmail)',        TRUE),
   ('smtp_from',   'REVA <noreply@reva.vn>','SMTP From',        'Tên + email hiển thị khi gửi',                             FALSE),
-  ('client_urls', 'https://reva-system-seven.vercel.app,https://reva.vn', 'Frontend URLs',    'Domain frontend được phép truy cập API, cách nhau bằng ,', FALSE),
+  ('client_urls', 'https://reva-system-seven.vercel.app,https://*.vercel.app,https://reva.vn,http://localhost:5173,http://localhost:5174', 'Frontend URLs', 'Domain frontend được phép truy cập API, cách nhau bằng ,', FALSE),
   ('jwt_secret',  '',                      'JWT Secret',       'Chuỗi bí mật ký token. Để trống = dùng biến môi trường',   TRUE)
 ON CONFLICT (key) DO NOTHING;
 
