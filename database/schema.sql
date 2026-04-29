@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
   email       VARCHAR(100) UNIQUE,
   role        VARCHAR(20) NOT NULL DEFAULT 'staff'
               CHECK (role IN ('superadmin','admin','manager','staff','cashier','accountant','inventory','viewer')),
+  location_id UUID REFERENCES locations(id) ON DELETE SET NULL,
   is_active   BOOLEAN NOT NULL DEFAULT TRUE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()

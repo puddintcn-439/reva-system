@@ -97,7 +97,11 @@ const changePassword = async (req, res, next) => {
 const getUsers = async (req, res, next) => {
   try {
     const result = await db.query(
-      'SELECT id, username, full_name, email, role, is_active, created_at FROM users ORDER BY created_at'
+      `SELECT u.id, u.username, u.full_name, u.email, u.role, u.is_active, u.created_at,
+              u.location_id, l.name AS location_name
+       FROM users u
+       LEFT JOIN locations l ON l.id = u.location_id
+       ORDER BY u.created_at`
     );
     res.json({ success: true, users: result.rows });
   } catch (err) { next(err); }
@@ -108,7 +112,7 @@ const getUsers = async (req, res, next) => {
  */
 const createUser = async (req, res, next) => {
   try {
-    const { username, password, full_name, email, role } = req.body;
+    const { username, password, full_name, email, role, location_id } = req.body;
     if (!username || !password || !role) {
       return res.status(400).json({ success: false, message: 'username, password và role là bắt buộc' });
     }
@@ -118,9 +122,9 @@ const createUser = async (req, res, next) => {
     }
     const hash = await bcrypt.hash(password, 10);
     const result = await db.query(
-      `INSERT INTO users (username, password, full_name, email, role)
-       VALUES ($1,$2,$3,$4,$5) RETURNING id, username, full_name, email, role, is_active, created_at`,
-      [username, hash, full_name || null, email || null, role]
+      `INSERT INTO users (username, password, full_name, email, role, location_id)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, username, full_name, email, role, location_id, is_active, created_at`,
+      [username, hash, full_name || null, email || null, role, location_id || null]
     );
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (err) {
@@ -136,7 +140,7 @@ const createUser = async (req, res, next) => {
  */
 const updateUser = async (req, res, next) => {
   try {
-    const { full_name, email, role, is_active, password } = req.body;
+    const { full_name, email, role, is_active, password, location_id } = req.body;
     const VALID_ROLES = ['admin','manager','staff','cashier','accountant','inventory','viewer'];
     if (role && !VALID_ROLES.includes(role)) {
       return res.status(400).json({ success: false, message: 'Role không hợp lệ' });
@@ -147,6 +151,7 @@ const updateUser = async (req, res, next) => {
     if (email !== undefined)      { params.push(email);      updates.push(`email=$${idx++}`); }
     if (role !== undefined)       { params.push(role);       updates.push(`role=$${idx++}`); }
     if (is_active !== undefined)  { params.push(is_active);  updates.push(`is_active=$${idx++}`); }
+    if ('location_id' in req.body){ params.push(location_id || null); updates.push(`location_id=$${idx++}`); }
     if (password)                 { const h = await bcrypt.hash(password, 10); params.push(h); updates.push(`password=$${idx++}`); }
     if (!updates.length) return res.status(400).json({ success: false, message: 'Không có gì để cập nhật' });
 

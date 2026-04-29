@@ -25,7 +25,7 @@ const ROLE_CLS = {
   viewer:     'bg-gray-400 text-white',
 }
 
-const EMPTY_FORM = { username: '', full_name: '', email: '', role: 'staff', password: '' }
+const EMPTY_FORM = { username: '', full_name: '', email: '', role: 'staff', password: '', location_id: '' }
 
 export default function Users() {
   const { user: me } = useAuth()
@@ -38,6 +38,11 @@ export default function Users() {
   const { data, isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: () => api.get('/auth/users').then(r => r.data.users),
+  })
+
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations'],
+    queryFn: () => api.get('/locations').then(r => r.data.data || []),
   })
 
   // ── mutations ──────────────────────────────────────────────────
@@ -69,7 +74,7 @@ export default function Users() {
   const open = (mode, data = {}) => {
     setModal({ mode, data })
     if (mode === 'add')  setForm(EMPTY_FORM)
-    if (mode === 'edit') setForm({ username: data.username, full_name: data.full_name || '', email: data.email || '', role: data.role, password: '' })
+    if (mode === 'edit') setForm({ username: data.username, full_name: data.full_name || '', email: data.email || '', role: data.role, password: '', location_id: data.location_id || '' })
     if (mode === 'pw')   setPwForm({ password: '', confirm: '' })
   }
   const close = () => setModal(null)
@@ -111,6 +116,7 @@ export default function Users() {
                 <th className="px-4 py-3 text-left">Họ tên</th>
                 <th className="px-4 py-3 text-left">Email</th>
                 <th className="px-4 py-3 text-left">Vai trò</th>
+                <th className="px-4 py-3 text-left">Cơ sở</th>
                 <th className="px-4 py-3 text-left">Tạo lúc</th>
                 <th className="px-4 py-3 text-center">Thao tác</th>
               </tr>
@@ -129,6 +135,7 @@ export default function Users() {
                       {ROLES.find(r => r.value === u.role)?.label || u.role}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-gray-600 text-xs">{u.location_name || <span className="text-gray-300">—</span>}</td>
                   <td className="px-4 py-3 text-gray-500">
                     {new Date(u.created_at).toLocaleDateString('vi-VN')}
                   </td>
@@ -184,6 +191,16 @@ export default function Users() {
                 <select className="w-full border rounded-lg px-3 py-2 text-sm" required
                   value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}>
                   {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Cơ sở kinh doanh</label>
+                <select className="w-full border rounded-lg px-3 py-2 text-sm"
+                  value={form.location_id} onChange={e => setForm(p => ({ ...p, location_id: e.target.value }))}>
+                  <option value="">— Không gắn cơ sở —</option>
+                  {locations.filter(l => l.is_active).map(l => (
+                    <option key={l.id} value={l.id}>{l.name}</option>
+                  ))}
                 </select>
               </div>
               {modal.mode === 'add' && (
