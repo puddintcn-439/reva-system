@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { fmtMoney as fmt } from '../../utils/format'
 import { saveReceiptPdf } from '../../utils/receipt'
+import { useAuth } from '../../context/AuthContext'
 
 const calcCommission = (price) => {
   price = Number(price)
@@ -331,6 +332,7 @@ const makeTab = () => ({
 })
 
 export default function POS() {
+  const { user } = useAuth()
   const scanInputRef   = useRef(null)
   const searchInputRef = useRef(null)
   const dropdownRef    = useRef(null)
@@ -411,6 +413,16 @@ export default function POS() {
   const [pendingPaySale, setPendingPaySale] = useState(null)
   const [paidSale,       setPaidSale]       = useState(null)
   const qc = useQueryClient()
+
+
+  // Pre-fill locationId from logged-in user's assigned location
+  useEffect(() => {
+    if (user?.location_id) {
+      setTabs(prev => prev.map((t, i) =>
+        i === 0 && !t.locationId ? { ...t, locationId: user.location_id } : t
+      ))
+    }
+  }, [user?.location_id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Focus scan input when switching tabs
   useEffect(() => { scanInputRef.current?.focus() }, [resolvedId])
