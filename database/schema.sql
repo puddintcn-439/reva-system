@@ -204,12 +204,16 @@ CREATE TABLE IF NOT EXISTS sales (
   total_amount     NUMERIC(12,0) NOT NULL DEFAULT 0,
   discount_amount  NUMERIC(12,0) NOT NULL DEFAULT 0,
   final_amount     NUMERIC(12,0) NOT NULL DEFAULT 0,
-  payment_method   VARCHAR(20) NOT NULL DEFAULT 'cash'
-                   CHECK (payment_method IN ('cash', 'transfer', 'mixed')),
-  note             TEXT,
-  location_id      UUID REFERENCES locations(id) ON DELETE SET NULL,
-  created_by       UUID REFERENCES users(id) ON DELETE SET NULL,
-  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  payment_method      VARCHAR(20) NOT NULL DEFAULT 'cash'
+                      CHECK (payment_method IN ('cash', 'transfer', 'mixed')),
+  status              VARCHAR(20) NOT NULL DEFAULT 'pending'
+                      CHECK (status IN ('pending', 'paid', 'cancelled')),
+  payment_reference   VARCHAR(255),
+  paid_at             TIMESTAMPTZ,
+  note                TEXT,
+  location_id         UUID REFERENCES locations(id) ON DELETE SET NULL,
+  created_by          UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_sales_invoice ON sales(invoice_code);
 CREATE INDEX IF NOT EXISTS idx_sales_created ON sales(created_at DESC);
