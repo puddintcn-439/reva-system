@@ -7,7 +7,7 @@ import {
   getEmailTemplates, createEmailTemplate, updateEmailTemplate, deleteEmailTemplate,
   getExpiringProducts, sendExpiringReminders,
   getBankAccounts, createBankAccount, updateBankAccount, setActiveBank, deleteBankAccount,
-  changePassword, getSystemSettings, saveSystemSettings, testSmtp,
+  changePassword, getSystemSettings, saveSystemSettings, testSmtp, getPublicSettings,
 } from '../../services/api'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, Edit2, Save, X, Send, CheckSquare, Square, Star, FlaskConical } from 'lucide-react'
@@ -25,6 +25,7 @@ export default function Settings() {
           { id: 'announcements', label: 'Thông báo' },
           { id: 'locations',    label: 'Cơ sở' },
           { id: 'banks',        label: 'Ngân hàng' },
+          { id: 'commission',   label: 'Phí ký gửi' },
           { id: 'receipt',      label: 'Hoá đơn' },
           { id: 'expiring',     label: 'Sắp hết hạn' },
           { id: 'email',        label: 'Mẫu Email' },
@@ -46,6 +47,7 @@ export default function Settings() {
       {activeTab === 'announcements' && <AnnouncementsTab />}
       {activeTab === 'locations'    && <LocationsTab />}
       {activeTab === 'banks'        && <BanksTab />}
+      {activeTab === 'commission'   && <CommissionTab />}
       {activeTab === 'receipt'      && <ReceiptTab />}
       {activeTab === 'expiring'     && <ExpiringTab />}
       {activeTab === 'email'        && <EmailTemplatesTab />}
@@ -982,6 +984,151 @@ function SystemSettingsTab() {
         className="btn-primary"
       >
         {saveMut.isPending ? 'Đang lưu...' : 'Lưu cài đặt hệ thống'}
+      </button>
+    </div>
+  )
+}
+
+// ────────────────────────────────────────────────────────────────
+function CommissionTab() {
+  const qc = useQueryClient()
+  const DEFAULT_TIERS = [
+    { max: 60000,  type: 'fixed',   amount: 20000, label: 'Dưới 60k' },
+    { max: 130000, type: 'fixed',   amount: 30000, label: '60k – 130k' },
+    { max: null,   type: 'percent', amount: 25,    label: 'Trên 130k' },
+  ]
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['public-settings'],
+    queryFn: () => getPublicSettings().then(r => r.data.data),
+  })
+
+  const [tiers, setTiers] = useState(null)
+  const [initialized, setInitialized] = useState(false)
+
+  if (!isLoading && !initialized) {
+    setTiers(data?.commission_tiers || DEFAULT_TIERS)
+    setInitialized(true)
+  }
+
+  const saveMut = useMutation({
+    mutationFn: (t) => saveSystemSettings({ commission_tiers: JSON.stringify(t) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['public-settings'] })
+      toast.success('Đã lưu công thức phí ký gửi')
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Lỗi'),
+  })
+
+  const update = (i, field, val) => setTiers(prev => prev.map((t, idx) => idx === i ? { ...t, [field]: val } : t))
+
+  const addTier = () => setTiers(prev => [...prev, { max: null, type: 'fixed', amount: 0, label: '' }])
+  const removeTier = (i) => setTiers(prev => prev.filter((_, idx) => idx !== i))
+
+  const fmtPreview = (tier) => {
+    if (tier.type === 'percent') return `${tier.amount}% / sản phẩm`
+    return `${Number(tier.amount).toLocaleString('vi-VN')}đ / sản phẩm`
+  }
+
+  if (isLoading || !tiers) return <div className="p-6 text-gray-400">Đang tải...</div>
+
+  return (
+    <div className="max-w-2xl space-y-6">
+      <div className="bg-white border rounded-lg p-6">
+        <h3 className="font-medium text-base mb-1">Công thức phí ký gửi</h3>
+        <p className="text-xs text-gray-500 mb-5">
+          Các bậc giá được áp dụng theo thứ tự tăng dần. Bậc cuối (không có giá trần) là mặc định cho mọi giá cao hơn.
+        </p>
+
+        <div className="space-y-3">
+          {tiers.map((tier, i) => (
+            <div key={i} className="grid grid-cols-12 gap-2 items-center bg-gray-50 rounded-lg p-3">
+              <div className="col-span-3">
+                <label className="text-xs text-gray-400 block mb-1">Nhãn</label>
+                <input
+                  value={tier.label || ''}
+                  onChange={e => update(i, 'label', e.target.value)}
+                  className="form-input w-full text-sm"
+                  placeholder="VD: Dưới 60k"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs text-gray-400 block mb-1">Giá trần (VND)</label>
+                <input
+                  type="number"
+                  value={tier.max ?? ''}
+                  onChange={e => update(i, 'max', e.target.value === '' ? null : Number(e.target.value))}
+                  className="form-input w-full text-sm"
+                  placeholder="Trống = không giới hạn"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs text-gray-400 block mb-1">Loại phí</label>
+                <select
+                  value={tier.type}
+                  onChange={e => update(i, 'type', e.target.value)}
+                  className="form-input w-full text-sm"
+                >
+                  <option value="fixed">Cố định (đ)</option>
+                  <option value="percent">Phần trăm (%)</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs text-gray-400 block mb-1">
+                  {tier.type === 'percent' ? 'Phần trăm (%)' : 'Số tiền (đ)'}
+                </label>
+                <input
+                  type="number"
+                  value={tier.amount}
+                  onChange={e => update(i, 'amount', Number(e.target.value))}
+                  className="form-input w-full text-sm"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs text-gray-400 block mb-1">Xem trước</label>
+                <p className="text-sm font-semibold text-hun-green">{fmtPreview(tier)}</p>
+              </div>
+              <div className="col-span-1 flex items-end pb-1">
+                <button
+                  onClick={() => removeTier(i)}
+                  className="p-1.5 text-gray-400 hover:text-red-500 rounded hover:bg-red-50"
+                  title="Xóa bậc"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={addTier}
+          className="mt-4 flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
+        >
+          <Plus size={15} /> Thêm bậc
+        </button>
+      </div>
+
+      {/* Preview */}
+      <div className="bg-hun-cream border border-hun-beige rounded-lg p-5">
+        <p className="text-xs font-medium text-hun-brown uppercase tracking-widest mb-4">Xem trước hiển thị trang chủ</p>
+        <div className="grid grid-cols-3 gap-4">
+          {tiers.map((tier, i) => (
+            <div key={i} className="bg-white border border-hun-beige p-4 text-center">
+              <p className="text-xs tracking-widest text-gray-400 uppercase mb-2">{tier.label || `Bậc ${i + 1}`}</p>
+              <p className="font-serif text-lg font-semibold">{fmtPreview(tier)}</p>
+              <p className="text-xs text-gray-400 mt-1">REVA nhận</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button
+        onClick={() => saveMut.mutate(tiers)}
+        disabled={saveMut.isPending}
+        className="btn-primary"
+      >
+        {saveMut.isPending ? 'Đang lưu...' : 'Lưu công thức phí'}
       </button>
     </div>
   )

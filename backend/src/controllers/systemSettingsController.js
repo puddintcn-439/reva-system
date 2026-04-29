@@ -29,7 +29,7 @@ const updateMany = async (req, res, next) => {
     // Only allow known keys
     const allowed = new Set([
       'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass', 'smtp_from',
-      'client_urls', 'jwt_secret',
+      'client_urls', 'jwt_secret', 'commission_tiers',
     ]);
     const filtered = {};
     for (const [k, v] of Object.entries(map)) {
@@ -73,4 +73,12 @@ const testSmtp = async (req, res, next) => {
   }
 };
 
-module.exports = { getAll, updateMany, testSmtp };
+/** GET /api/system-settings/public — no auth, returns non-secret settings for public pages */
+const getPublic = async (req, res, next) => {
+  try {
+    const tiers = await settings.getCommissionTiers();
+    res.json({ success: true, data: { commission_tiers: tiers } });
+  } catch (err) { next(err); }
+};
+
+module.exports = { getAll, updateMany, testSmtp, getPublic };

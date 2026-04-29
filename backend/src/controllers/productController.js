@@ -1,18 +1,30 @@
 const db = require('../config/database');
 const { validationResult } = require('express-validator');
+const sysSettings = require('../config/systemSettings');
 
-/** Calculate commission based on HUN fee structure */
-const calculateCommission = (price) => {
+/** Calculate commission based on configurable fee tiers from DB */
+async function calculateCommission(price) {
   price = Number(price);
-  let commission, consignorAmount;
-  if (price < 60000)       { commission = 20000; }
-  else if (price <= 130000) { commission = 30000; }
-  else                      { commission = Math.round(price * 0.25); }
-  // Guard: consignorAmount must never be negative
-  consignorAmount = Math.max(0, price - commission);
-  commission = price - consignorAmount; // recalculate so commission + consignorAmount = price
+  const tiers = await sysSettings.getCommissionTiers();
+  // Sort tiers by max ascending (null = last)
+  const sorted = [...tiers].sort((a, b) => {
+    if (a.max === null) return 1;
+    if (b.max === null) return -1;
+    return a.max - b.max;
+  });
+  let commission = 0;
+  for (const tier of sorted) {
+    if (tier.max === null || price <= tier.max) {
+      commission = tier.type === 'percent'
+        ? Math.round(price * tier.amount / 100)
+        : Number(tier.amount);
+      break;
+    }
+  }
+  const consignorAmount = Math.max(0, price - commission);
+  commission = price - consignorAmount;
   return { commission, consignorAmount };
-};
+}
 
 /**
  * GET /api/products
@@ -114,7 +126,7 @@ const createProduct = async (req, res, next) => {
       image_url, consign_start, consign_end, code,
     } = req.body;
 
-    const { commission, consignorAmount } = calculateCommission(sale_price);
+    const { commission, consignorAmount } = await calculateCommission(sale_price);
 
     // Auto-generate code if not provided: SP + base36 timestamp (6 chars) e.g. SP-A3F2K1
     const productCode = code || `SP-${Date.now().toString(36).toUpperCase().slice(-6)}`;
@@ -185,7 +197,7 @@ const updateProduct = async (req, res, next) => {
     if (req.body.sale_price !== undefined && req.body.sale_price !== '') {
       const priceNum = Number(req.body.sale_price);
       if (Number.isNaN(priceNum)) return res.status(400).json({ success: false, message: 'sale_price không hợp lệ' });
-      const { commission, consignorAmount } = calculateCommission(priceNum);
+      const { commission, consignorAmount } = await calculateCommission(priceNum);
       params.push(commission);    updates.push(`commission_amount = $${idx++}`);
       params.push(consignorAmount); updates.push(`consignor_amount = $${idx++}`);
     }

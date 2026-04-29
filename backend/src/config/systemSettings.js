@@ -141,4 +141,20 @@ async function getJwtSecret() {
   return process.env.DATABASE_URL || process.env.DB_PASSWORD || 'reva_fallback_secret_change_me';
 }
 
-module.exports = { get, getSmtpConfig, getAllowedOrigins, getJwtSecret, set, setMany, invalidate };
+/**
+ * Get commission tiers array (parsed from JSON DB value).
+ * Default: [{max:60000,type:'fixed',amount:20000},{max:130000,type:'fixed',amount:30000},{max:null,type:'percent',amount:25}]
+ */
+async function getCommissionTiers() {
+  const raw = await get('commission_tiers');
+  if (raw) {
+    try { return JSON.parse(raw); } catch { /* fall through */ }
+  }
+  return [
+    { max: 60000,  type: 'fixed',   amount: 20000, label: 'Dưới 60k' },
+    { max: 130000, type: 'fixed',   amount: 30000, label: '60k – 130k' },
+    { max: null,   type: 'percent', amount: 25,    label: 'Trên 130k' },
+  ];
+}
+
+module.exports = { get, getSmtpConfig, getAllowedOrigins, getJwtSecret, getCommissionTiers, set, setMany, invalidate };

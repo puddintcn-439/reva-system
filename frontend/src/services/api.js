@@ -111,5 +111,6 @@ export const deleteBankAccount = (id) => api.delete(`/banks/${id}`)
 export const getSystemSettings  = () => api.get('/system-settings')
 export const saveSystemSettings = (data) => api.patch('/system-settings', data)
 export const testSmtp           = (to) => api.post('/system-settings/test-smtp', { to })
+export const getPublicSettings  = () => api.get('/system-settings/public')
 
 export default api
