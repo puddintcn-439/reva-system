@@ -1,7 +1,7 @@
 {
   "name": "hun-frontend",
   "version": "1.0.0",
-  "description": "H.U.N Thanh Ly Ky Gui - Frontend",
+  "description": "REVA Thanh Ly Ky Gui - Frontend",
   "type": "module",
   "scripts": {
     "dev": "vite",
