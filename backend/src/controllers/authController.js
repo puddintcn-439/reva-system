@@ -64,9 +64,19 @@ const login = async (req, res, next) => {
  */
 const getMe = async (req, res, next) => {
   try {
+    const result = await db.query(
+      `SELECT u.id, u.username, u.full_name, u.email, u.role, u.is_active,
+              u.location_id, l.name AS location_name, u.created_at
+       FROM users u
+       LEFT JOIN locations l ON l.id = u.location_id
+       WHERE u.id = $1`,
+      [req.user.id]
+    );
+    if (!result.rows.length) {
+      return res.status(401).json({ success: false, message: 'Tài khoản không tồn tại' });
+    }
     const permissions = await getPermissions(req.user.role);
-    const { password: _, ...userInfo } = req.user;
-    res.json({ success: true, user: { ...userInfo, permissions } });
+    res.json({ success: true, user: { ...result.rows[0], permissions } });
   } catch (err) {
     next(err);
   }
@@ -157,7 +167,7 @@ const updateUser = async (req, res, next) => {
 
     params.push(req.params.id);
     const result = await db.query(
-      `UPDATE users SET ${updates.join(',')} WHERE id=$${idx} RETURNING id,username,full_name,email,role,is_active`,
+      `UPDATE users SET ${updates.join(',')} WHERE id=$${idx} RETURNING id,username,full_name,email,role,location_id,is_active`,
       params
     );
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Không tìm thấy user' });
