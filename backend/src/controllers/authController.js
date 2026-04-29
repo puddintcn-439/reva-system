@@ -6,11 +6,16 @@ const sysSettings = require('../config/systemSettings');
 
 /** Fetch permissions array for a given role from DB */
 async function getPermissions(role) {
-  const result = await db.query(
-    'SELECT permission FROM role_permissions WHERE role = $1',
-    [role]
-  );
-  return result.rows.map((r) => r.permission);
+  try {
+    const result = await db.query(
+      'SELECT permission FROM role_permissions WHERE role = $1',
+      [role]
+    );
+    return result.rows.map((r) => r.permission);
+  } catch {
+    // role_permissions table may not exist yet (migration pending)
+    return [];
+  }
 }
 
 /**
