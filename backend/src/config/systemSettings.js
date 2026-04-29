@@ -132,7 +132,10 @@ async function setMany(map) {
  * @returns {Promise<string>}
  */
 async function getJwtSecret() {
-  return get('jwt_secret', 'JWT_SECRET');
+  const val = await get('jwt_secret', 'JWT_SECRET');
+  if (val) return val;
+  // Fallback: derive a stable secret from DB connection string so login never crashes
+  return process.env.DATABASE_URL || process.env.DB_PASSWORD || 'reva_fallback_secret_change_me';
 }
 
 module.exports = { get, getSmtpConfig, getAllowedOrigins, getJwtSecret, set, setMany, invalidate };
