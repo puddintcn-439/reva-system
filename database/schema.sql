@@ -247,6 +247,7 @@ CREATE TABLE IF NOT EXISTS settlements (
   status            VARCHAR(20) NOT NULL DEFAULT 'pending'
                     CHECK (status IN ('pending', 'paid', 'cancelled')),
   paid_at           TIMESTAMPTZ,
+  payment_notes     TEXT,
   notes             TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
