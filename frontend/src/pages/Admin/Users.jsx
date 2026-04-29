@@ -6,6 +6,7 @@ import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 
 const ROLES = [
+  { value: 'superadmin',  label: 'Superadmin' },
   { value: 'admin',       label: 'Admin' },
   { value: 'manager',     label: 'Quản lý' },
   { value: 'staff',       label: 'Nhân viên' },
@@ -16,6 +17,7 @@ const ROLES = [
 ]
 
 const ROLE_CLS = {
+  superadmin: 'bg-gray-800 text-white',
   admin:      'bg-hun-brown text-white',
   manager:    'bg-indigo-600 text-white',
   staff:      'bg-blue-600 text-white',

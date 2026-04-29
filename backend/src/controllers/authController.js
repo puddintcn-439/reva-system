@@ -116,7 +116,7 @@ const createUser = async (req, res, next) => {
     if (!username || !password || !role) {
       return res.status(400).json({ success: false, message: 'username, password và role là bắt buộc' });
     }
-    const VALID_ROLES = ['admin','manager','staff','cashier','accountant','inventory','viewer'];
+    const VALID_ROLES = ['superadmin','admin','manager','staff','cashier','accountant','inventory','viewer'];
     if (!VALID_ROLES.includes(role)) {
       return res.status(400).json({ success: false, message: 'Role không hợp lệ' });
     }
@@ -141,7 +141,7 @@ const createUser = async (req, res, next) => {
 const updateUser = async (req, res, next) => {
   try {
     const { full_name, email, role, is_active, password, location_id } = req.body;
-    const VALID_ROLES = ['admin','manager','staff','cashier','accountant','inventory','viewer'];
+    const VALID_ROLES = ['superadmin','admin','manager','staff','cashier','accountant','inventory','viewer'];
     if (role && !VALID_ROLES.includes(role)) {
       return res.status(400).json({ success: false, message: 'Role không hợp lệ' });
     }
