@@ -1,4 +1,20 @@
 const db = require('../config/database')
+const sysSettings = require('../config/systemSettings')
+
+function calcCommission (price, tiers) {
+  const sorted = [...tiers].sort((a, b) =>
+    a.max === null ? 1 : b.max === null ? -1 : a.max - b.max
+  )
+  for (const tier of sorted) {
+    if (tier.max === null || price <= tier.max) {
+      const commission = tier.type === 'percent'
+        ? Math.round(price * tier.amount / 100)
+        : Number(tier.amount)
+      return { commission, consignorAmount: Math.max(0, price - commission) }
+    }
+  }
+  return { commission: 0, consignorAmount: price }
+}
 
 /**
  * GET /api/pos/search?q=...&limit=8
@@ -131,16 +147,22 @@ const createSale = async (req, res, next) => {
     )
     const sale = saleResult.rows[0]
 
+    // Load commission tiers once for this transaction
+    const tiers = await sysSettings.getCommissionTiers()
+
     // Insert sale items + mark products sold
     for (const item of items) {
+      const price = Number(item.sale_price)
+      const { commission, consignorAmount } = calcCommission(price, tiers)
+
       await client.query(
         `INSERT INTO sale_items
            (sale_id, product_id, product_name, product_code,
             sale_price, commission_amount, consignor_amount, consignor_id)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [sale.id, item.product_id || null, item.product_name,
-         item.product_code || null, item.sale_price,
-         item.commission_amount || 0, item.consignor_amount || 0,
+         item.product_code || null, price,
+         commission, consignorAmount,
          item.consignor_id || null]
       )
 
