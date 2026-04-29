@@ -80,7 +80,10 @@ async function getAllowedOrigins() {
   const raw = (all['client_urls'] && all['client_urls'] !== '')
     ? all['client_urls']
     : (process.env.CLIENT_URL || 'http://localhost:5173');
-  return raw.split(',').map((o) => o.trim()).filter(Boolean);
+  const list = raw.split(',').map((o) => o.trim()).filter(Boolean);
+  // Always allow all Vercel preview/production deployments
+  if (!list.includes('https://*.vercel.app')) list.push('https://*.vercel.app');
+  return list;
 }
 
 /**
