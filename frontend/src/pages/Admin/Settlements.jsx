@@ -320,6 +320,33 @@ export default function Settlements() {
                   Thông tin thanh toán: {detailData.payment_notes}
                 </p>
               )}
+
+              {/* QR + mark paid — only show when pending and consignor has bank info */}
+              {detailData.status === 'pending' && detailData.bank_id && detailData.bank_account_no && (
+                <div className="border rounded-xl p-4 flex flex-col items-center gap-2 bg-blue-50 mb-6">
+                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">QR thanh toán cho khách hàng</p>
+                  <img
+                    src={`https://img.vietqr.io/image/${detailData.bank_id}-${detailData.bank_account_no}-compact2.png?amount=${Number(detailData.total_payout)}&addInfo=QT${detailData.code}`}
+                    alt="QR thanh toán"
+                    className="w-52 h-52 object-contain"
+                  />
+                  <p className="text-xs text-gray-600 font-medium">{detailData.bank_account_name || detailData.full_name}</p>
+                  <p className="text-xs text-gray-400">{detailData.bank_id} · {detailData.bank_account_no}</p>
+                  <p className="text-sm font-bold text-blue-700">{fmt(detailData.total_payout)}</p>
+                  <button
+                    onClick={() => { setPayModal(detailData); setDetailId(null); setPayNotes('') }}
+                    className="mt-2 flex items-center gap-2 bg-green-600 text-white rounded-xl px-6 py-2.5 text-sm font-semibold hover:bg-green-700"
+                  >
+                    <CheckCircle size={16} /> Đã chuyển khoản
+                  </button>
+                </div>
+              )}
+              {detailData.status === 'pending' && (!detailData.bank_id || !detailData.bank_account_no) && (
+                <div className="border border-amber-200 rounded-lg px-4 py-3 bg-amber-50 text-sm text-amber-700 mb-4">
+                  Khách hàng chưa có thông tin ngân hàng. Vào trang <strong>Khách hàng</strong> để cập nhật STK.
+                </div>
+              )}
+
               {detailData.items?.length > 0 && (
                 <table className="w-full text-sm">
                   <thead className="border-b">

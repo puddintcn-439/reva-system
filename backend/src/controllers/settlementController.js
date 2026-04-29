@@ -289,7 +289,8 @@ const deleteSettlement = async (req, res, next) => {
 const getSettlement = async (req, res, next) => {
   try {
     const s = await db.query(
-      `SELECT s.*, co.full_name, co.phone, co.code AS consignor_code
+      `SELECT s.*, co.full_name, co.phone, co.code AS consignor_code,
+              co.bank_id, co.bank_account_no, co.bank_account_name
        FROM settlements s
        LEFT JOIN consignors co ON co.id = s.consignor_id
        WHERE s.id = $1`,

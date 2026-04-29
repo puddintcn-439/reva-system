@@ -1,14 +1,18 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { getConsignors, getConsignor } from '../../services/api'
-import { Eye, X } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getConsignors, getConsignor, updateConsignor } from '../../services/api'
+import { Eye, X, Pencil } from 'lucide-react'
 import { fmtMoney as fmt } from '../../utils/format'
+import toast from 'react-hot-toast'
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('vi-VN') : '—'
 
 export default function Consignors() {
   const [page, setPage]         = useState(1)
   const [search, setSearch]     = useState('')
   const [detailId, setDetailId] = useState(null)
+  const [editBank, setEditBank] = useState(false)
+  const [bankForm, setBankForm] = useState({ bank_id: '', bank_account_no: '', bank_account_name: '' })
+  const qc = useQueryClient()
 
   const { data, isLoading } = useQuery({
     queryKey: ['consignors', { page, search }],
@@ -19,6 +23,21 @@ export default function Consignors() {
     queryFn: () => detailId ? getConsignor(detailId).then((r) => r.data.data) : null,
     enabled: !!detailId,
   })
+
+  const updateMut = useMutation({
+    mutationFn: ({ id, data }) => updateConsignor(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries(['consignor-detail', detailId])
+      toast.success('Đã cập nhật thông tin ngân hàng')
+      setEditBank(false)
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Lỗi cập nhật'),
+  })
+
+  const openDetail = (id) => {
+    setDetailId(id)
+    setEditBank(false)
+  }
 
   const STATUS_CLS = {
     active:  'bg-green-100 text-green-700',
@@ -67,7 +86,7 @@ export default function Consignors() {
                   <td className="px-4 py-3 text-center text-hun-green font-medium">{c.sold_count || 0}</td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{fmtDate(c.created_at)}</td>
                   <td className="px-4 py-3">
-                    <button onClick={() => setDetailId(c.id)} className="p-1.5 text-gray-400 hover:text-hun-black rounded hover:bg-gray-100">
+                    <button onClick={() => openDetail(c.id)} className="p-1.5 text-gray-400 hover:text-hun-black rounded hover:bg-gray-100">
                       <Eye size={15} />
                     </button>
                   </td>
@@ -100,6 +119,79 @@ export default function Consignors() {
               <button onClick={() => setDetailId(null)} className="p-1 hover:bg-gray-100 rounded"><X size={20} /></button>
             </div>
             <div className="p-6">
+              {/* Bank info */}
+              <div className="mb-6 border rounded-lg p-4 bg-gray-50">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-gray-600">Tài khoản ngân hàng</h3>
+                  {!editBank && (
+                    <button
+                      onClick={() => {
+                        setBankForm({
+                          bank_id: detail.bank_id || '',
+                          bank_account_no: detail.bank_account_no || '',
+                          bank_account_name: detail.bank_account_name || '',
+                        })
+                        setEditBank(true)
+                      }}
+                      className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                    >
+                      <Pencil size={12} /> Chỉnh sửa
+                    </button>
+                  )}
+                </div>
+                {editBank ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Mã ngân hàng (VietQR)</label>
+                        <input
+                          value={bankForm.bank_id}
+                          onChange={(e) => setBankForm(p => ({ ...p, bank_id: e.target.value.toUpperCase() }))}
+                          className="form-input w-full text-sm"
+                          placeholder="VD: TPB, VCB, TCB"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Số tài khoản</label>
+                        <input
+                          value={bankForm.bank_account_no}
+                          onChange={(e) => setBankForm(p => ({ ...p, bank_account_no: e.target.value }))}
+                          className="form-input w-full text-sm"
+                          placeholder="Số tài khoản"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">Tên chủ tài khoản</label>
+                        <input
+                          value={bankForm.bank_account_name}
+                          onChange={(e) => setBankForm(p => ({ ...p, bank_account_name: e.target.value }))}
+                          className="form-input w-full text-sm"
+                          placeholder="Tên chủ TK"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400">Mã ngân hàng theo VietQR: TPB (TPBank), VCB (Vietcombank), TCB (Techcombank), MB (MBBank), VTB (Vietinbank), BIDV, ACB, MSB...</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => updateMut.mutate({ id: detail.id, data: { ...detail, ...bankForm } })}
+                        disabled={updateMut.isPending}
+                        className="btn-primary text-sm py-1.5"
+                      >
+                        {updateMut.isPending ? 'Đang lưu...' : 'Lưu'}
+                      </button>
+                      <button onClick={() => setEditBank(false)} className="btn-outline text-sm py-1.5">Hủy</button>
+                    </div>
+                  </div>
+                ) : detail.bank_account_no ? (
+                  <div className="text-sm space-y-1">
+                    <p><span className="text-gray-400">Ngân hàng:</span> <strong>{detail.bank_id}</strong></p>
+                    <p><span className="text-gray-400">STK:</span> <strong>{detail.bank_account_no}</strong></p>
+                    <p><span className="text-gray-400">Chủ TK:</span> <strong>{detail.bank_account_name}</strong></p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">Chưa có thông tin ngân hàng</p>
+                )}
+              </div>
               {/* Products */}
               <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-400 mb-3">
                 Sản phẩm ký gửi ({detail.products?.length || 0})

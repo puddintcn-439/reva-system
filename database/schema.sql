@@ -129,10 +129,13 @@ CREATE TABLE IF NOT EXISTS consignors (
   phone       VARCHAR(20) NOT NULL,
   email       VARCHAR(100),
   address     TEXT,
-  code        VARCHAR(20) UNIQUE,
-  notes       TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  code              VARCHAR(20) UNIQUE,
+  notes             TEXT,
+  bank_id           VARCHAR(20),
+  bank_account_no   VARCHAR(50),
+  bank_account_name VARCHAR(100),
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_consignors_phone ON consignors(phone);
 CREATE INDEX IF NOT EXISTS idx_consignors_code  ON consignors(code);

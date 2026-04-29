@@ -49,11 +49,12 @@ const getConsignor = async (req, res, next) => {
 
 const updateConsignor = async (req, res, next) => {
   try {
-    const { full_name, phone, email, address, notes } = req.body;
+    const { full_name, phone, email, address, notes, bank_id, bank_account_no, bank_account_name } = req.body;
     const result = await db.query(
-      `UPDATE consignors SET full_name=$1, phone=$2, email=$3, address=$4, notes=$5
-       WHERE id=$6 RETURNING *`,
-      [full_name, phone, email, address, notes, req.params.id]
+      `UPDATE consignors SET full_name=$1, phone=$2, email=$3, address=$4, notes=$5,
+        bank_id=$6, bank_account_no=$7, bank_account_name=$8
+       WHERE id=$9 RETURNING *`,
+      [full_name, phone, email, address, notes, bank_id || null, bank_account_no || null, bank_account_name || null, req.params.id]
     );
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Không tìm thấy khách hàng' });
     res.json({ success: true, data: result.rows[0] });
