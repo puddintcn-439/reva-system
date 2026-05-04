@@ -46,6 +46,7 @@ export const getMe          = () => api.get('/auth/me')
 export const changePassword = (data) => api.post('/auth/change-password', data)
 
 export const getDashboardStats    = () => api.get('/consignors/stats')
+export const getDashboardReports  = (params) => api.get('/consignors/reports', { params })
 export const getAdminProducts     = (params) => api.get('/products', { params })
 export const createProduct        = (data) => api.post('/products', data)
 export const bulkCreateProducts   = (data) => api.post('/products/bulk', data)

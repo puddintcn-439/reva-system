@@ -83,7 +83,8 @@ const { authenticate, requirePermission } = require('../middleware/auth');
  *         description: Cập nhật thành công
  */
 
-router.get('/stats', authenticate, requirePermission('consignors:view'), ctrl.getStats);
+router.get('/stats',   authenticate, requirePermission('consignors:view'), ctrl.getStats);
+router.get('/reports', authenticate, requirePermission('dashboard:view'),  ctrl.getReports);
 router.get('/', authenticate, requirePermission('consignors:view'), ctrl.getConsignors);
 router.get('/:id', authenticate, requirePermission('consignors:view'), ctrl.getConsignor);
 router.put('/:id', authenticate, requirePermission('consignors:manage'), ctrl.updateConsignor);

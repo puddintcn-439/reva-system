@@ -92,4 +92,78 @@ const getStats = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getConsignors, getConsignor, updateConsignor, getStats };
+/**
+ * GET /consignors/reports?period=day|month&months=6
+ * Revenue chart data + top consignors
+ */
+const getReports = async (req, res, next) => {
+  try {
+    const { period = 'day', months = 3 } = req.query;
+    const safeMonths = Math.min(Math.max(1, Number(months) || 3), 24);
+
+    // Revenue chart: group by day or month over last N months
+    const truncUnit = period === 'month' ? 'month' : 'day';
+    const revenueChart = await db.query(
+      `SELECT
+         DATE_TRUNC($1, sold_at) AS period,
+         SUM(sale_price)          AS revenue,
+         SUM(commission_amount)   AS commission,
+         SUM(consignor_amount)    AS payout,
+         COUNT(*)                 AS items_sold
+       FROM products
+       WHERE status = 'sold'
+         AND sold_at >= NOW() - INTERVAL '1 month' * $2
+       GROUP BY 1
+       ORDER BY 1 ASC`,
+      [truncUnit, safeMonths]
+    );
+
+    // Top 10 consignors by total sold revenue
+    const topConsignors = await db.query(
+      `SELECT
+         co.id,
+         co.full_name,
+         co.phone,
+         COUNT(p.id)              AS items_sold,
+         SUM(p.sale_price)        AS total_revenue,
+         SUM(p.commission_amount) AS total_commission,
+         SUM(p.consignor_amount)  AS total_payout
+       FROM consignors co
+       JOIN products p ON p.consignor_id = co.id AND p.status = 'sold'
+       WHERE p.sold_at >= NOW() - INTERVAL '1 month' * $1
+       GROUP BY co.id, co.full_name, co.phone
+       ORDER BY total_revenue DESC
+       LIMIT 10`,
+      [safeMonths]
+    );
+
+    // Category breakdown
+    const categoryBreakdown = await db.query(
+      `SELECT
+         COALESCE(c.name, 'Không phân loại') AS category,
+         COUNT(p.id)              AS items_sold,
+         SUM(p.sale_price)        AS revenue
+       FROM products p
+       LEFT JOIN categories c ON c.id = p.category_id
+       WHERE p.status = 'sold'
+         AND p.sold_at >= NOW() - INTERVAL '1 month' * $1
+       GROUP BY c.name
+       ORDER BY revenue DESC
+       LIMIT 8`,
+      [safeMonths]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        period: truncUnit,
+        months: safeMonths,
+        revenue_chart: revenueChart.rows,
+        top_consignors: topConsignors.rows,
+        category_breakdown: categoryBreakdown.rows,
+      },
+    });
+  } catch (err) { next(err); }
+};
+
+module.exports = { getConsignors, getConsignor, updateConsignor, getStats, getReports };
