@@ -1,6 +1,9 @@
 const nodemailer = require('nodemailer');
 const sysSettings = require('./systemSettings');
 
+// Lazy-require db to avoid circular dependency (db → sysSettings → email → db)
+const getDb = () => require('./database');
+
 /**
  * Create transporter from DB config (falls back to env if DB not yet configured).
  */
@@ -51,4 +54,28 @@ const sendMail = async (to, subject, body) => {
   return info;
 };
 
-module.exports = { interpolate, sendMail };
+/**
+ * Look up an email_templates row by key, interpolate vars, and send.
+ * Silently logs errors — never throws, so callers don't crash.
+ *
+ * @param {string} templateKey  Key in email_templates table
+ * @param {string} to           Recipient address
+ * @param {Object} vars         Variables for {{placeholder}} substitution
+ */
+const sendTemplateEmail = async (templateKey, to, vars = {}) => {
+  if (!to) return; // no email on file — skip silently
+  try {
+    const db = getDb();
+    const tpl = await db.query('SELECT subject, body FROM email_templates WHERE key = $1', [templateKey]);
+    if (!tpl.rows.length) {
+      console.warn(`[EMAIL] Template "${templateKey}" not found — skipping`);
+      return;
+    }
+    const { subject, body } = tpl.rows[0];
+    await sendMail(to, interpolate(subject, vars), interpolate(body, vars));
+  } catch (err) {
+    console.error(`[EMAIL] Failed to send "${templateKey}" to ${to}:`, err.message);
+  }
+};
+
+module.exports = { interpolate, sendMail, sendTemplateEmail };

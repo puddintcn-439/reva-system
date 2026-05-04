@@ -1,5 +1,8 @@
 const db = require('../config/database');
 const { validationResult } = require('express-validator');
+const { sendTemplateEmail } = require('../config/email');
+
+const REQUEST_TYPE_LABEL = { direct: 'Mang đến trực tiếp', online: 'Gửi qua bưu chính', pickup: 'REVA đến lấy' };
 
 /**
  * POST /api/consignments  - Public: submit consignment request
@@ -142,7 +145,32 @@ const updateStatus = async (req, res, next) => {
       [status, admin_notes, req.params.id]
     );
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Không tìm thấy yêu cầu' });
-    res.json({ success: true, data: result.rows[0] });
+    const updated = result.rows[0];
+    res.json({ success: true, data: updated });
+
+    // Fire-and-forget email when consignment is approved
+    if (status === 'approved') {
+      try {
+        const coRow = await db.query(
+          'SELECT co.full_name, co.email FROM consignors co JOIN consignment_requests cr ON cr.consignor_id = co.id WHERE cr.id = $1',
+          [req.params.id]
+        );
+        if (coRow.rows.length && coRow.rows[0].email) {
+          const co = coRow.rows[0];
+          const fmt = (d) => d ? new Date(d).toLocaleDateString('vi-VN') : '';
+          sendTemplateEmail('consignment_approved', co.email, {
+            full_name: co.full_name || 'Quý khách',
+            request_id: updated.id,
+            created_at: fmt(updated.created_at),
+            request_type: REQUEST_TYPE_LABEL[updated.request_type] || updated.request_type || '',
+            scheduled_date: fmt(updated.scheduled_date),
+            admin_notes: admin_notes || '',
+          });
+        }
+      } catch (mailErr) {
+        console.error('[EMAIL] consignment_approved trigger error:', mailErr.message);
+      }
+    }
   } catch (err) {
     next(err);
   }

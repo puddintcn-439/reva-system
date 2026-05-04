@@ -1,5 +1,34 @@
 const db = require('../config/database');
 const { validationResult } = require('express-validator');
+const { sendTemplateEmail } = require('../config/email');
+
+const sysSettings = require('../config/systemSettings');
+
+// Format helpers reused across functions
+const fmtDate  = (d) => d ? new Date(d).toLocaleDateString('vi-VN') : '';
+const fmtMoney = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
+
+/** Fire-and-forget settlement_created email for one settlement record + consignor */
+async function _sendSettlementEmail(settlement, consignorEmail, consignorName, itemCount) {
+  try {
+    const cfg = await sysSettings.getSmtpConfig();
+    const clientUrl = process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',')[0].trim() : 'https://reva.vn';
+    const lookupUrl = `${clientUrl}/sales?code=${encodeURIComponent(settlement.code)}`;
+    sendTemplateEmail('settlement_created', consignorEmail, {
+      full_name:        consignorName || 'Quý khách',
+      settlement_code:  settlement.code,
+      period_start:     fmtDate(settlement.period_start),
+      period_end:       fmtDate(settlement.period_end),
+      items_count:      String(itemCount),
+      total_sale:       fmtMoney(settlement.total_sale),
+      total_commission: fmtMoney(settlement.total_commission),
+      total_payout:     fmtMoney(settlement.total_payout),
+      lookup_url:       lookupUrl,
+    });
+  } catch (err) {
+    console.error('[EMAIL] settlement_created trigger error:', err.message);
+  }
+}
 
 /**
  * GET /api/settlements/lookup?code=HUN-001
@@ -142,7 +171,18 @@ const createSettlement = async (req, res, next) => {
     }
 
     await client.query('COMMIT');
-    res.status(201).json({ success: true, data: s.rows[0] });
+    const saved = s.rows[0];
+    res.status(201).json({ success: true, data: saved });
+
+    // Fire-and-forget email to consignor
+    try {
+      const coRow = await db.query('SELECT full_name, email FROM consignors WHERE id = $1', [consignor_id]);
+      if (coRow.rows.length && coRow.rows[0].email) {
+        _sendSettlementEmail(saved, coRow.rows[0].email, coRow.rows[0].full_name, products.rows.length);
+      }
+    } catch (mailErr) {
+      console.error('[EMAIL] settlement_created lookup error:', mailErr.message);
+    }
   } catch (err) {
     await client.query('ROLLBACK');
     next(err);
@@ -225,7 +265,7 @@ const bulkCreateSettlements = async (req, res, next) => {
         );
       }
 
-      created.push(s.rows[0]);
+      created.push({ settlement: s.rows[0], consignor_id, itemCount: products.rows.length });
     }
 
     await client.query('COMMIT');
@@ -235,6 +275,18 @@ const bulkCreateSettlements = async (req, res, next) => {
       skipped: skipped.length,
       message: `Đã tạo ${created.length} quyết toán${skipped.length ? `, bỏ qua ${skipped.length} khách có số tiền = 0` : ''}.`,
     });
+
+    // Fire-and-forget emails for each created settlement
+    for (const { settlement, consignor_id: cid, itemCount } of created) {
+      try {
+        const coRow = await db.query('SELECT full_name, email FROM consignors WHERE id = $1', [cid]);
+        if (coRow.rows.length && coRow.rows[0].email) {
+          _sendSettlementEmail(settlement, coRow.rows[0].email, coRow.rows[0].full_name, itemCount);
+        }
+      } catch (mailErr) {
+        console.error('[EMAIL] bulk settlement_created email error:', mailErr.message);
+      }
+    }
   } catch (err) {
     await client.query('ROLLBACK');
     next(err);
