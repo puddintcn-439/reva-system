@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { posLookup, posSearch, posCreateSale, posLookupCustomer, posSales, posSale, posMarkPaid, getAdminLocations, getActiveBank } from '../../services/api'
+import { posLookup, posSearch, posCreateSale, posLookupCustomer, posGetCustomers, posSales, posSale, posMarkPaid, getAdminLocations, getActiveBank } from '../../services/api'
 import toast from 'react-hot-toast'
 import {
   ScanBarcode, Trash2, ShoppingCart, Printer, RotateCcw,
@@ -406,9 +406,40 @@ export default function POS() {
   const [pendingPaySale,        setPendingPaySale]        = useState(null)
   const [paidSale,              setPaidSale]              = useState(null)
   const [customerLookupLoading, setCustomerLookupLoading] = useState(false)
+  const [showPhoneSuggest,       setShowPhoneSuggest]       = useState(false)
+  const phoneDropdownRef = useRef(null)
   const qc = useQueryClient()
 
-  // Auto-fill customer name from phone lookup
+  // Phone suggestions query — fires when user types >= 3 chars
+  const phoneSuggestTrimmed = customer.phone.trim()
+  const { data: phoneSuggestData } = useQuery({
+    queryKey: ['phone-suggest', phoneSuggestTrimmed],
+    queryFn: () => posGetCustomers({ search: phoneSuggestTrimmed, limit: 6 }).then(r => r.data.data),
+    enabled: phoneSuggestTrimmed.length >= 3,
+    staleTime: 15_000,
+  })
+
+  // Close phone dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (phoneDropdownRef.current && !phoneDropdownRef.current.contains(e.target))
+        setShowPhoneSuggest(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Pick a customer suggestion
+  const selectPhoneSuggestion = (c) => {
+    setTabs(prev => prev.map(t =>
+      t.id === resolvedIdRef.current
+        ? { ...t, customer: { name: c.name, phone: c.phone } }
+        : t
+    ))
+    setShowPhoneSuggest(false)
+  }
+
+  // Auto-fill customer name from exact phone lookup (on blur)
   const handlePhoneLookup = async (phone) => {
     const trimmed = phone.trim()
     if (trimmed.length < 9) return
@@ -422,7 +453,6 @@ export default function POS() {
             ? { ...t, customer: { name: found.customer_name, phone: trimmed } }
             : t
         ))
-        toast.success(`Khách hàng: ${found.customer_name}`, { duration: 2000 })
       }
     } catch {
       // not found — first-time customer, silently ignore
@@ -925,10 +955,14 @@ export default function POS() {
               <label className="text-xs text-gray-400 mb-1 block">
                 Số điện thoại <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
+              <div className="relative" ref={phoneDropdownRef}>
                 <input
                   value={customer.phone}
-                  onChange={e => patchActive({ customer: { ...customer, phone: e.target.value } })}
+                  onChange={e => {
+                    patchActive({ customer: { ...customer, phone: e.target.value } })
+                    setShowPhoneSuggest(true)
+                  }}
+                  onFocus={() => customer.phone.trim().length >= 3 && setShowPhoneSuggest(true)}
                   onBlur={e => handlePhoneLookup(e.target.value)}
                   placeholder="Nhập SĐT để tra cứu tên KH"
                   className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-hun-black ${
@@ -937,6 +971,24 @@ export default function POS() {
                 />
                 {customerLookupLoading && (
                   <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />
+                )}
+
+                {/* Phone suggestion dropdown */}
+                {showPhoneSuggest && phoneSuggestTrimmed.length >= 3 && phoneSuggestData?.length > 0 && (
+                  <ul className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                    {phoneSuggestData.map(c => (
+                      <li key={c.id}>
+                        <button
+                          type="button"
+                          onMouseDown={e => { e.preventDefault(); selectPhoneSuggestion(c) }}
+                          className="w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="font-medium">{c.name}</span>
+                          <span className="text-gray-400 font-mono text-xs">{c.phone}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
             </div>
