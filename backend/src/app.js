@@ -134,9 +134,15 @@ app.use('/banks', bankRoutes);
 app.use('/system-settings', systemSettingsRoutes);
 app.use('/upload', uploadRoutes);
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Health check — UptimeRobot monitors this endpoint
+app.get('/health', async (req, res) => {
+  try {
+    const db = require('./config/database');
+    await db.query('SELECT 1');
+    res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'error', db: 'disconnected', timestamp: new Date().toISOString() });
+  }
 });
 
 // 404 handler
