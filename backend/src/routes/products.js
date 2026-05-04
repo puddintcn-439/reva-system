@@ -141,6 +141,7 @@ const { audit } = require('../middleware/audit');
 
 // Public
 router.get('/categories', ctrl.getCategories);
+router.get('/commission-tiers', ctrl.getCommissionTiersPublic);
 router.get('/', optionalAuth, ctrl.getProducts);
 router.get('/:id', optionalAuth, ctrl.getProduct);
 

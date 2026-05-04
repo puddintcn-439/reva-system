@@ -10,15 +10,7 @@ import {
 import { fmtMoney as fmt } from '../../utils/format'
 import { saveReceiptPdf } from '../../utils/receipt'
 import { useAuth } from '../../context/AuthContext'
-
-const calcCommission = (price) => {
-  price = Number(price)
-  if (!price) return { commission: 0, consignorAmount: 0 }
-  if (price < 60000)  return { commission: 20000, consignorAmount: price - 20000 }
-  if (price <= 130000) return { commission: 30000, consignorAmount: price - 30000 }
-  const c = Math.round(price * 0.25)
-  return { commission: c, consignorAmount: price - c }
-}
+import { useCommissionTiers } from '../../hooks/useCommissionTiers'
 
 const PAYMENT_ICONS = {
   cash:     <Banknote size={14} />,
@@ -333,6 +325,7 @@ const makeTab = () => ({
 
 export default function POS() {
   const { user } = useAuth()
+  const { calcCommission } = useCommissionTiers()
   const scanInputRef   = useRef(null)
   const searchInputRef = useRef(null)
   const dropdownRef    = useRef(null)
@@ -497,7 +490,7 @@ export default function POS() {
     setShowDropdown(false)
     setActiveIdx(-1)
     searchInputRef.current?.focus()
-  }, [])
+  }, [calcCommission])
 
   const handleSearchKeyDown = (e) => {
     if (!showDropdown || !searchResults.length) return

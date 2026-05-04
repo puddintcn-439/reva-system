@@ -1,15 +1,7 @@
 import { useState, useCallback } from 'react'
 import { X, Plus, Trash2, Check } from 'lucide-react'
 import { fmtMoney as fmt } from '../utils/format'
-
-const calcCommission = (price) => {
-  price = Number(price)
-  if (!price) return { commission: 0, consignorAmount: 0 }
-  if (price < 60000)  return { commission: 20000, consignorAmount: price - 20000 }
-  if (price <= 130000) return { commission: 30000, consignorAmount: price - 30000 }
-  const c = Math.round(price * 0.25)
-  return { commission: c, consignorAmount: price - c }
-}
+import { useCommissionTiers } from '../hooks/useCommissionTiers'
 
 const EMPTY_ROW = () => ({
   _id:              Math.random().toString(36).slice(2),
@@ -21,6 +13,7 @@ const EMPTY_ROW = () => ({
 })
 
 export default function BulkProductModal({ categories, locations, consignors, onSubmit, onClose, loading }) {
+  const { calcCommission } = useCommissionTiers()
   const today = new Date().toISOString().slice(0, 10)
   const threeMonths = new Date(Date.now() + 90 * 86400_000).toISOString().slice(0, 10)
 

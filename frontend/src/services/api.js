@@ -29,11 +29,12 @@ api.interceptors.response.use(
 )
 
 // ── Public APIs ──────────────────────────────────────────
-export const getAnnouncements  = () => api.get('/announcements')
-export const getLocations      = () => api.get('/locations')
-export const getProducts       = (params) => api.get('/products', { params })
-export const getProduct        = (id) => api.get(`/products/${id}`)
-export const getCategories     = () => api.get('/products/categories')
+export const getAnnouncements    = () => api.get('/announcements')
+export const getLocations        = () => api.get('/locations')
+export const getProducts         = (params) => api.get('/products', { params })
+export const getProduct          = (id) => api.get(`/products/${id}`)
+export const getCategories       = () => api.get('/products/categories')
+export const getCommissionTiers  = () => api.get('/products/commission-tiers')
 
 export const submitConsignment = (data) => api.post('/consignments', data)
 export const submitPurchase    = (data) => api.post('/purchases', data)

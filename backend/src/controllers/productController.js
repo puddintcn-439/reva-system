@@ -381,4 +381,18 @@ const bulkCreateProducts = async (req, res, next) => {
   }
 };
 
-module.exports = { getProducts, getProduct, createProduct, bulkCreateProducts, updateProduct, deleteProduct, getCategories, returnProduct, expireBatch };
+/**
+ * GET /api/products/commission-tiers
+ * Public: return the configured commission tier rules so the frontend
+ * can calculate commission client-side without hardcoding values.
+ */
+const getCommissionTiersPublic = async (req, res, next) => {
+  try {
+    const tiers = await sysSettings.getCommissionTiers();
+    res.json({ success: true, data: tiers });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getProducts, getProduct, createProduct, bulkCreateProducts, updateProduct, deleteProduct, getCategories, returnProduct, expireBatch, getCommissionTiersPublic };

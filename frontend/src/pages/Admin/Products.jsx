@@ -19,17 +19,6 @@ const STATUS_LABELS = {
   expired:{ label: 'Hết hạn',   cls: 'bg-red-100 text-red-600' },
 }
 
-const calcCommission = (price) => {
-  price = Number(price)
-  if (!price) return { commission: 0, consignorAmount: 0 }
-  let commission
-  if (price < 60000)   commission = 20000
-  else if (price <= 130000) commission = 30000
-  else                 commission = Math.round(price * 0.25)
-  const consignorAmount = Math.max(0, price - commission)
-  return { commission: price - consignorAmount, consignorAmount }
-}
-
 const pad = (n) => String(n).padStart(2, '0')
 const fmtISO = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
 
