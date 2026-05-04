@@ -129,9 +129,14 @@ const getConsignment = async (req, res, next) => {
 /**
  * PATCH /api/consignments/:id/status  (admin/staff)
  */
+const CONSIGNMENT_STATUSES = ['pending', 'approved', 'active', 'completed', 'rejected', 'cancelled'];
+
 const updateStatus = async (req, res, next) => {
   try {
     const { status, admin_notes } = req.body;
+    if (!CONSIGNMENT_STATUSES.includes(status)) {
+      return res.status(400).json({ success: false, message: `Trạng thái không hợp lệ. Cần một trong: ${CONSIGNMENT_STATUSES.join(', ')}` });
+    }
     const result = await db.query(
       `UPDATE consignment_requests SET status=$1, admin_notes=$2 WHERE id=$3 RETURNING *`,
       [status, admin_notes, req.params.id]

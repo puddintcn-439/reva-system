@@ -105,6 +105,11 @@ const createSale = async (req, res, next) => {
     return res.status(400).json({ success: false, message: 'Giỏ hàng trống' })
   }
 
+  const VALID_PAYMENT_METHODS = ['cash', 'transfer', 'mixed']
+  if (!VALID_PAYMENT_METHODS.includes(payment_method)) {
+    return res.status(400).json({ success: false, message: 'Phương thức thanh toán không hợp lệ' })
+  }
+
   const client = await db.getClient()
   try {
     await client.query('BEGIN')
@@ -226,6 +231,7 @@ const createSale = async (req, res, next) => {
 const getSales = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, date, date_from, date_to, payment_method, search } = req.query
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100)
     const params = []
     const conds = []
     let idx = 1
@@ -244,12 +250,12 @@ const getSales = async (req, res, next) => {
     }
 
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : ''
-    const offset = (Number(page) - 1) * Number(limit)
+    const offset = (Number(page) - 1) * safeLimit
 
     const countResult = await db.query(`SELECT COUNT(*) FROM sales s ${where}`, params)
     const total = parseInt(countResult.rows[0].count)
 
-    params.push(Number(limit), offset)
+    params.push(safeLimit, offset)
     const result = await db.query(
       `SELECT s.*, l.name AS location_name,
               u.full_name AS created_by_name,
@@ -305,18 +311,19 @@ const markSalePaid = async (req, res, next) => {
   try {
     const { id } = req.params
     const { payment_reference } = req.body
+    const check = await db.query('SELECT status FROM sales WHERE id = $1', [id])
+    if (!check.rows.length) return res.status(404).json({ success: false, message: 'Không tìm thấy hóa đơn' })
+    const currentStatus = check.rows[0].status
+    if (currentStatus === 'paid') return res.json({ success: true, message: 'Đã xác nhận trước đó', data: check.rows[0] })
+    if (currentStatus === 'cancelled') return res.status(400).json({ success: false, message: 'Không thể xác nhận hóa đơn đã hủy' })
+
     const result = await db.query(
       `UPDATE sales
        SET status = 'paid', paid_at = NOW(), payment_reference = $2
-       WHERE id = $1 AND status != 'paid'
+       WHERE id = $1 AND status = 'pending'
        RETURNING *`,
       [id, payment_reference || null]
     )
-    if (!result.rows.length) {
-      const check = await db.query('SELECT status FROM sales WHERE id = $1', [id])
-      if (!check.rows.length) return res.status(404).json({ success: false, message: 'Không tìm thấy hóa đơn' })
-      if (check.rows[0].status === 'paid') return res.json({ success: true, message: 'Đã xác nhận trước đó', data: check.rows[0] })
-    }
     res.json({ success: true, data: result.rows[0] })
   } catch (err) {
     next(err)
@@ -406,6 +413,7 @@ const lookupCustomer = async (req, res, next) => {
 const getCustomers = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search } = req.query
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100)
     const params = []
     const conds = []
     let idx = 1
@@ -417,12 +425,12 @@ const getCustomers = async (req, res, next) => {
     }
 
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : ''
-    const offset = (Number(page) - 1) * Number(limit)
+    const offset = (Number(page) - 1) * safeLimit
 
     const countResult = await db.query(`SELECT COUNT(*) FROM customers c ${where}`, params)
     const total = parseInt(countResult.rows[0].count)
 
-    params.push(Number(limit), offset)
+    params.push(safeLimit, offset)
     const result = await db.query(
       `SELECT c.*,
               COUNT(s.id) FILTER (WHERE s.status != 'cancelled') AS purchase_count,
@@ -440,7 +448,7 @@ const getCustomers = async (req, res, next) => {
     res.json({
       success: true,
       data: result.rows,
-      pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) },
+      pagination: { total, page: Number(page), limit: safeLimit, pages: Math.ceil(total / safeLimit) },
     })
   } catch (err) {
     next(err)

@@ -167,6 +167,16 @@ const updateProduct = async (req, res, next) => {
       if (req.body[f] !== undefined) {
         let val = req.body[f];
 
+        // Block manual status='sold' — sold status must go through POS createSale
+        if (f === 'status' && val === 'sold') {
+          return res.status(400).json({ success: false, message: 'Không thể đặt trạng thái “só́d” thủ công. Hãy sử dụng POS để bán hàng.' });
+        }
+
+        // Validate allowed status values
+        if (f === 'status' && !['pending', 'active', 'returned', 'expired'].includes(val)) {
+          return res.status(400).json({ success: false, message: 'Trạng thái không hợp lệ' });
+        }
+
         // Required / NOT NULL fields: reject empty values
         if (['name', 'status', 'condition_percent', 'sale_price'].includes(f)) {
           if (val === '' || val == null) return res.status(400).json({ success: false, message: `${f} không hợp lệ` });

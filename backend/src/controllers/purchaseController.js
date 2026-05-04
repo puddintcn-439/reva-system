@@ -59,9 +59,14 @@ const getPurchaseRequests = async (req, res, next) => {
 /**
  * PATCH /api/purchases/:id/status  (admin/staff)
  */
+const PURCHASE_STATUSES = ['pending', 'contacted', 'completed', 'rejected'];
+
 const updateStatus = async (req, res, next) => {
   try {
     const { status, admin_notes } = req.body;
+    if (!PURCHASE_STATUSES.includes(status)) {
+      return res.status(400).json({ success: false, message: `Trạng thái không hợp lệ. Cần một trong: ${PURCHASE_STATUSES.join(', ')}` });
+    }
     const result = await db.query(
       `UPDATE purchase_requests SET status=$1, admin_notes=$2 WHERE id=$3 RETURNING *`,
       [status, admin_notes, req.params.id]
