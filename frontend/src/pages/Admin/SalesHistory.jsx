@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { posSales, posSale, getActiveBank, posCancelSale, posMarkPaid } from '../../services/api'
-import { Eye, Printer, Download, X, Search, Ban, CheckCircle2 } from 'lucide-react'
+import { posSales, posSale, getActiveBank, posCancelSale, posMarkPaid, posCreateReturn, posGetReturns } from '../../services/api'
+import { Eye, Printer, Download, X, Search, Ban, CheckCircle2, RotateCcw } from 'lucide-react'
 import { fmtMoney as fmt } from '../../utils/format'
 import { saveReceiptPdf } from '../../utils/receipt'
 import { useAuth } from '../../context/AuthContext'
@@ -20,6 +20,140 @@ const STATUS_COLORS = {
   pending: 'bg-yellow-100 text-yellow-700',
   paid: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-500 line-through',
+}
+
+// ── Return Modal ───────────────────────────────────────────────────────────
+function ReturnModal({ sale, onClose, onSuccess }) {
+  const [selected, setSelected]   = useState([])   // sale_item ids
+  const [refundAmt, setRefundAmt] = useState('')
+  const [reason, setReason]       = useState('')
+
+  const items = sale.items || []
+
+  const toggle = (item) => {
+    setSelected(prev =>
+      prev.some(s => s.sale_item_id === item.id)
+        ? prev.filter(s => s.sale_item_id !== item.id)
+        : [...prev, {
+            sale_item_id: item.id,
+            product_id:   item.product_id,
+            product_name: item.product_name,
+            product_code: item.product_code,
+            sale_price:   item.sale_price,
+          }]
+    )
+  }
+
+  const suggestedRefund = selected.reduce((s, i) => s + Number(i.sale_price), 0)
+
+  const returnMut = useMutation({
+    mutationFn: (data) => posCreateReturn(sale.id, data),
+    onSuccess: (res) => {
+      toast.success('Đã tạo phiếu trả hàng')
+      onSuccess(res.data.data)
+      onClose()
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Lỗi tạo phiếu trả hàng'),
+  })
+
+  const handleSubmit = () => {
+    if (!selected.length) { toast.error('Chọn ít nhất 1 sản phẩm'); return }
+    returnMut.mutate({
+      items: selected,
+      refund_amount: Number(refundAmt) || suggestedRefund,
+      reason: reason || null,
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b shrink-0">
+          <div>
+            <h2 className="font-bold text-lg">Trả hàng</h2>
+            <p className="text-sm text-gray-500 font-mono">{sale.invoice_code}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Item selection */}
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              Chọn sản phẩm trả ({selected.length}/{items.length})
+            </p>
+            <div className="border rounded-lg divide-y">
+              {items.map(item => {
+                const checked = selected.some(s => s.sale_item_id === item.id)
+                return (
+                  <label key={item.id} className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors ${checked ? 'bg-orange-50' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggle(item)}
+                      className="w-4 h-4 accent-orange-500 shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{item.product_name}</p>
+                      {item.product_code && <p className="text-xs text-gray-400 font-mono">{item.product_code}</p>}
+                    </div>
+                    <span className="text-sm font-semibold tabular-nums shrink-0">{fmt(item.sale_price)}</span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Refund amount */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
+              Số tiền hoàn trả (đ)
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={refundAmt}
+              onChange={e => setRefundAmt(e.target.value)}
+              placeholder={suggestedRefund > 0 ? `Gợi ý: ${suggestedRefund.toLocaleString('vi-VN')}` : '0'}
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
+            />
+            {suggestedRefund > 0 && !refundAmt && (
+              <button
+                type="button"
+                onClick={() => setRefundAmt(String(suggestedRefund))}
+                className="mt-1 text-xs text-orange-600 hover:underline"
+              >
+                Dùng tổng SP đã chọn: {fmt(suggestedRefund)}
+              </button>
+            )}
+          </div>
+
+          {/* Reason */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Lý do trả hàng</label>
+            <textarea
+              rows={2}
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+              placeholder="Lỗi sản phẩm, khách đổi ý..."
+              className="w-full border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-orange-400"
+            />
+          </div>
+        </div>
+
+        <div className="p-4 border-t shrink-0 flex gap-2">
+          <button onClick={onClose} className="flex-1 border rounded-lg py-2 text-sm hover:bg-gray-50">Hủy bỏ</button>
+          <button
+            onClick={handleSubmit}
+            disabled={returnMut.isPending || !selected.length}
+            className="flex-1 bg-orange-500 text-white rounded-lg py-2 text-sm font-semibold hover:bg-orange-600 disabled:opacity-50"
+          >
+            {returnMut.isPending ? 'Đang xử lý...' : 'Xác nhận trả hàng'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ── Receipt HTML ───────────────────────────────────────────────────────────
@@ -238,6 +372,7 @@ export default function SalesHistory() {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [cancelTarget, setCancelTarget] = useState(null)  // sale to cancel
   const [cancelReason, setCancelReason] = useState('')
+  const [returnTarget, setReturnTarget] = useState(null)  // sale to return
 
   const { data: salesData, isLoading } = useQuery({
     queryKey: ['pos-sales', search, page],
@@ -278,6 +413,12 @@ export default function SalesHistory() {
   const sales = salesData?.data || []
   const total = salesData?.total || 0
   const totalPages = Math.ceil(total / 20)
+
+  const { data: returnsData } = useQuery({
+    queryKey: ['sale-returns', selectedSale?.id],
+    queryFn: () => posGetReturns(selectedSale.id).then(r => r.data.data),
+    enabled: !!selectedSale?.id,
+  })
 
   const openDetail = async (sale) => {
     if (sale.items) { setSelectedSale(sale); return }
@@ -357,6 +498,21 @@ export default function SalesHistory() {
                     >
                       <Eye size={16} />
                     </button>
+                    {isAdmin && sale.status === 'paid' && (
+                      <button
+                        onClick={async () => {
+                          let full = sale
+                          if (!full.items) {
+                            try { const r = await posSale(sale.id); full = r.data.data } catch (_) {}
+                          }
+                          setReturnTarget(full)
+                        }}
+                        className="text-gray-400 hover:text-orange-500 transition-colors"
+                        title="Trả hàng / Hoàn tiền"
+                      >
+                        <RotateCcw size={16} />
+                      </button>
+                    )}
                     {isAdmin && sale.status !== 'paid' && sale.status !== 'cancelled' && (
                       <button
                         onClick={() => { setCancelTarget(sale); setCancelReason('') }}
@@ -483,6 +639,27 @@ export default function SalesHistory() {
                   Ghi chú: {selectedSale.note}
                 </div>
               )}
+
+              {/* Return history */}
+              {returnsData && returnsData.length > 0 && (
+                <div className="border border-orange-200 rounded-lg overflow-hidden">
+                  <div className="bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700 uppercase tracking-wide">
+                    Phiếu trả hàng ({returnsData.length})
+                  </div>
+                  {returnsData.map((ret, i) => (
+                    <div key={ret.id} className={`px-3 py-2 text-sm ${i > 0 ? 'border-t border-orange-100' : ''}`}>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-gray-500 text-xs">{fmtDate(ret.created_at)}{ret.created_by_name ? ` · ${ret.created_by_name}` : ''}</span>
+                        <span className="font-semibold text-orange-600">- {fmt(ret.refund_amount)}</span>
+                      </div>
+                      {ret.reason && <p className="text-xs text-gray-500 mb-1">Lý do: {ret.reason}</p>}
+                      <div className="text-xs text-gray-400">
+                        SP trả: {(ret.items || []).map(it => it.product_name).join(', ')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
               {['transfer', 'mixed'].includes(selectedSale.payment_method) && activeBank && (
@@ -504,8 +681,7 @@ export default function SalesHistory() {
                 </div>
               )}
 
-              {selectedSale.status === 'pending' && (
-                <button
+              {selectedSale.status === 'pending' && (                <button
                   onClick={() => markPaidMutation.mutate(selectedSale.id)}
                   disabled={markPaidMutation.isPending}
                   className="mx-auto flex items-center justify-center gap-2 bg-green-600 text-white rounded-xl px-6 py-3 mb-4 text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
@@ -532,6 +708,16 @@ export default function SalesHistory() {
                 <Printer size={15} />
                 In lại
               </button>
+              {isAdmin && selectedSale.status === 'paid' && (
+                <button
+                  onClick={() => setReturnTarget(selectedSale)}
+                  className="flex items-center justify-center gap-2 bg-orange-500 text-white rounded-lg px-3 py-2 text-sm hover:bg-orange-600"
+                  title="Trả hàng / Hoàn tiền"
+                >
+                  <RotateCcw size={15} />
+                  Trả hàng
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -565,6 +751,18 @@ export default function SalesHistory() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Return Modal */}
+      {returnTarget && (
+        <ReturnModal
+          sale={returnTarget}
+          onClose={() => setReturnTarget(null)}
+          onSuccess={() => {
+            queryClient.invalidateQueries(['pos-sales'])
+            queryClient.invalidateQueries(['sale-returns', returnTarget.id])
+          }}
+        />
       )}
     </div>
   )

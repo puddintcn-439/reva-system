@@ -65,6 +65,8 @@ export const posSales      = (params) => api.get('/pos/sales', { params })
 export const posSale       = (id) => api.get(`/pos/sales/${id}`)
 export const posMarkPaid   = (id, payment_reference) => api.patch(`/pos/sales/${id}/mark-paid`, { payment_reference })
 export const posCancelSale = (id, cancel_reason)     => api.patch(`/pos/sales/${id}/cancel`, { cancel_reason })
+export const posCreateReturn = (id, data)             => api.post(`/pos/sales/${id}/return`, data)
+export const posGetReturns   = (id)                   => api.get(`/pos/sales/${id}/returns`)
 
 export const getConsignors        = (params) => api.get('/consignors', { params })
 export const getConsignor         = (id) => api.get(`/consignors/${id}`)

@@ -158,4 +158,10 @@ router.patch('/sales/:id/mark-paid', authenticate, requirePermission('pos:sale')
 // Hủy hóa đơn (chỉ admin) — khôi phục sản phẩm về active
 router.patch('/sales/:id/cancel', authenticate, requirePermission('settlements:manage'), audit('cancel', 'sale'), ctrl.cancelSale)
 
+// Trả hàng / hoàn tiền (partial hoặc toàn bộ)
+router.post('/sales/:id/return', authenticate, requirePermission('settlements:manage'), audit('return', 'sale'), ctrl.createReturn)
+
+// Lấy danh sách phiếu trả hàng của hóa đơn
+router.get('/sales/:id/returns', authenticate, requirePermission('pos:history'), ctrl.getReturns)
+
 module.exports = router

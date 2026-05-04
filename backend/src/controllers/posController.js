@@ -477,4 +477,103 @@ const getCustomer = async (req, res, next) => {
   }
 }
 
-module.exports = { searchProducts, lookupProduct, lookupCustomer, getCustomers, getCustomer, createSale, getSales, getSale, markSalePaid, cancelSale }
+/**
+ * POST /pos/sales/:id/return
+ * Tạo phiếu trả hàng (partial hoặc toàn bộ)
+ * Body: { items: [{ sale_item_id, product_id, product_name, product_code, sale_price }], refund_amount, reason }
+ */
+const createReturn = async (req, res, next) => {
+  const { id } = req.params
+  const { items, refund_amount = 0, reason } = req.body
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ success: false, message: 'Chưa chọn sản phẩm trả' })
+  }
+
+  const client = await db.getClient()
+  try {
+    await client.query('BEGIN')
+
+    const saleRes = await client.query(
+      `SELECT id, status, invoice_code FROM sales WHERE id = $1`, [id]
+    )
+    if (!saleRes.rows.length) {
+      await client.query('ROLLBACK')
+      return res.status(404).json({ success: false, message: 'Không tìm thấy hóa đơn' })
+    }
+    if (saleRes.rows[0].status === 'cancelled') {
+      await client.query('ROLLBACK')
+      return res.status(400).json({ success: false, message: 'Hóa đơn đã bị hủy, không thể trả hàng' })
+    }
+
+    // Create return record
+    const returnRes = await client.query(
+      `INSERT INTO sale_returns (sale_id, refund_amount, reason, created_by)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [id, Number(refund_amount) || 0, reason || null, req.user?.id || null]
+    )
+    const ret = returnRes.rows[0]
+
+    // Insert return items + mark products as returned
+    for (const item of items) {
+      await client.query(
+        `INSERT INTO sale_return_items (return_id, sale_item_id, product_id, product_name, product_code, sale_price)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [ret.id, item.sale_item_id || null, item.product_id || null,
+         item.product_name, item.product_code || null, Number(item.sale_price)]
+      )
+      if (item.product_id) {
+        await client.query(
+          `UPDATE products SET status = 'returned' WHERE id = $1`,
+          [item.product_id]
+        )
+      }
+    }
+
+    await client.query('COMMIT')
+
+    const full = await db.query(
+      `SELECT r.*, u.full_name AS created_by_name,
+              json_agg(ri.* ORDER BY ri.sale_price DESC) AS items
+       FROM sale_returns r
+       LEFT JOIN users u ON u.id = r.created_by
+       JOIN sale_return_items ri ON ri.return_id = r.id
+       WHERE r.id = $1
+       GROUP BY r.id, u.full_name`,
+      [ret.id]
+    )
+
+    res.status(201).json({ success: true, data: full.rows[0] })
+  } catch (err) {
+    await client.query('ROLLBACK')
+    next(err)
+  } finally {
+    client.release()
+  }
+}
+
+/**
+ * GET /pos/sales/:id/returns
+ * Lấy danh sách phiếu trả hàng của 1 hóa đơn
+ */
+const getReturns = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const result = await db.query(
+      `SELECT r.*, u.full_name AS created_by_name,
+              json_agg(ri.* ORDER BY ri.sale_price DESC) AS items
+       FROM sale_returns r
+       LEFT JOIN users u ON u.id = r.created_by
+       JOIN sale_return_items ri ON ri.return_id = r.id
+       WHERE r.sale_id = $1
+       GROUP BY r.id, u.full_name
+       ORDER BY r.created_at DESC`,
+      [id]
+    )
+    res.json({ success: true, data: result.rows })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { searchProducts, lookupProduct, lookupCustomer, getCustomers, getCustomer, createSale, getSales, getSale, markSalePaid, cancelSale, createReturn, getReturns }
