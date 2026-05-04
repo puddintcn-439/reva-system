@@ -238,6 +238,8 @@ CREATE TABLE IF NOT EXISTS sales (
                       CHECK (status IN ('pending', 'paid', 'cancelled')),
   payment_reference   VARCHAR(255),
   paid_at             TIMESTAMPTZ,
+  cancel_reason       TEXT,
+  cancelled_at        TIMESTAMPTZ,
   note                TEXT,
   location_id         UUID REFERENCES locations(id) ON DELETE SET NULL,
   created_by          UUID REFERENCES users(id) ON DELETE SET NULL,

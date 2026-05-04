@@ -3,10 +3,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getAdminProducts, getCategories, getAdminLocations, getConsignors,
   createProduct, updateProduct, deleteProduct, bulkCreateProducts,
-  returnProduct, expireBatch,
+  returnProduct, expireBatch, uploadImage,
 } from '../../services/api'
 import toast from 'react-hot-toast'
-import { Plus, Edit2, Trash2, X, Check, Printer, Tag, ListPlus, CornerDownLeft, Clock } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Check, Printer, Tag, ListPlus, CornerDownLeft, Clock, Upload } from 'lucide-react'
 import ProductLabelModal from '../../components/ProductLabelModal'
 import BulkProductModal from '../../components/BulkProductModal'
 import { fmtMoney as fmt } from '../../utils/format'
@@ -36,6 +36,12 @@ const emptyForm = () => {
 export default function Products() {
   const [filters, setFilters]   = useState({ status: '', category_id: '', consignor_id: '', price_min: '', price_max: '', page: 1 })
   const [modal, setModal]       = useState(null) // null | { mode: 'create'|'edit', data: {} }
+  const [imageUrl, setImageUrl] = useState('')
+
+  const openModal = (m) => {
+    setModal(m)
+    setImageUrl(m?.data?.image_url || '')
+  }
   const [selected, setSelected] = useState(new Set())
   const [labelModal, setLabelModal] = useState(null) // array of products to print
   const [bulkModal, setBulkModal]   = useState(false)
@@ -119,6 +125,12 @@ export default function Products() {
     onError: (e) => toast.error(e.response?.data?.message || 'Lỗi'),
   })
 
+  const uploadImgMut = useMutation({
+    mutationFn: (file) => { const fd = new FormData(); fd.append('image', file); return uploadImage(fd) },
+    onSuccess: (res) => setImageUrl(res.data.url),
+    onError: (e) => toast.error(e.response?.data?.message || 'Lỗi upload ảnh'),
+  })
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const fd = new FormData(e.target)
@@ -157,7 +169,7 @@ export default function Products() {
           >
             <Clock size={16} /> {expireMut.isPending ? 'Đang xử lý...' : 'Hết hạn hàng loạt'}
           </button>
-          <button onClick={() => setModal({ mode: 'create', data: emptyForm() })} className="btn-primary text-sm gap-2">
+          <button onClick={() => openModal({ mode: 'create', data: emptyForm() })} className="btn-primary text-sm gap-2">
             <Plus size={16} /> Thêm sản phẩm
           </button>
         </div>
@@ -281,7 +293,7 @@ export default function Products() {
                           <Printer size={15} />
                         </button>
                         <button
-                          onClick={() => setModal({ mode: 'edit', data: p })}
+                          onClick={() => openModal({ mode: 'edit', data: p })}
                           title="Chỉnh sửa"
                           className="p-1.5 text-gray-400 hover:text-hun-black rounded hover:bg-gray-100"
                         >
@@ -449,8 +461,26 @@ export default function Products() {
                   <input name="consign_end" type="date" defaultValue={modal.data.consign_end?.slice(0,10)} className="form-input" />
                 </div>
                 <div className="col-span-2">
-                  <label className="form-label">URL ảnh</label>
-                  <input name="image_url" defaultValue={modal.data.image_url} className="form-input" placeholder="https://..." />
+                  <label className="form-label">Ảnh sản phẩm</label>
+                  <input type="hidden" name="image_url" value={imageUrl} readOnly />
+                  <div className="flex items-center gap-3">
+                    {imageUrl && (
+                      <img src={imageUrl} alt="preview" className="h-16 w-16 object-cover rounded border flex-shrink-0" />
+                    )}
+                    <label className={`cursor-pointer flex items-center gap-2 px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 ${uploadImgMut.isPending ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <Upload size={14} />
+                      {uploadImgMut.isPending ? 'Đang tải...' : (imageUrl ? 'Đổi ảnh' : 'Chọn ảnh')}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImgMut.mutate(f) }}
+                      />
+                    </label>
+                    {imageUrl && (
+                      <button type="button" onClick={() => setImageUrl('')} className="text-xs text-red-500 hover:underline">Xóa ảnh</button>
+                    )}
+                  </div>
                 </div>
                 <div className="col-span-2">
                   <label className="form-label">Mô tả</label>

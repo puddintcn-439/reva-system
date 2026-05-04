@@ -19,6 +19,7 @@ const posRoutes = require('./routes/pos');
 const emailRoutes = require('./routes/email');
 const bankRoutes  = require('./routes/banks');
 const systemSettingsRoutes = require('./routes/systemSettings');
+const uploadRoutes = require('./routes/upload');
 const { errorHandler } = require('./middleware/errorHandler');
 const sysSettings = require('./config/systemSettings');
 
@@ -131,6 +132,7 @@ app.use('/pos', posRoutes);
 app.use('/email', emailRoutes);
 app.use('/banks', bankRoutes);
 app.use('/system-settings', systemSettingsRoutes);
+app.use('/upload', uploadRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

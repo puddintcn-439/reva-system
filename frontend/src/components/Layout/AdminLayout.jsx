@@ -21,8 +21,8 @@ const NAV = [
   { to: '/admin/guide',         icon: BookOpen,        label: 'Hướng dẫn sử dụng',  permission: undefined },
 ]
 
-const ROLE_LABEL = { admin: 'Admin', manager: 'Quản lý', staff: 'Nhân viên', cashier: 'Thu ngân', accountant: 'Kế toán', inventory: 'Quản lý kho', viewer: 'Chỉ xem' }
-const ROLE_CLS   = { admin: 'bg-hun-brown text-white', manager: 'bg-indigo-600 text-white', staff: 'bg-blue-600 text-white', cashier: 'bg-gray-500 text-white', accountant: 'bg-green-700 text-white', inventory: 'bg-orange-600 text-white', viewer: 'bg-gray-400 text-white' }
+const ROLE_LABEL = { superadmin: 'Super Admin', admin: 'Admin', manager: 'Quản lý', staff: 'Nhân viên', cashier: 'Thu ngân', accountant: 'Kế toán', inventory: 'Quản lý kho', viewer: 'Chỉ xem' }
+const ROLE_CLS   = { superadmin: 'bg-red-700 text-white', admin: 'bg-hun-brown text-white', manager: 'bg-indigo-600 text-white', staff: 'bg-blue-600 text-white', cashier: 'bg-gray-500 text-white', accountant: 'bg-green-700 text-white', inventory: 'bg-orange-600 text-white', viewer: 'bg-gray-400 text-white' }
 
 export default function AdminLayout() {
   const { user, logout, can } = useAuth()
