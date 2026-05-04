@@ -8,5 +8,6 @@ router.get('/public',    ctrl.getPublic);           // no auth — public settin
 router.get('/',          ...guard, ctrl.getAll);
 router.patch('/',        ...guard, ctrl.updateMany);
 router.post('/test-smtp', ...guard, ctrl.testSmtp);
+router.post('/recalculate-commissions', ...guard, ctrl.recalculateCommissions);
 
 module.exports = router;

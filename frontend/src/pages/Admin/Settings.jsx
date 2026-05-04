@@ -7,7 +7,7 @@ import {
   getEmailTemplates, createEmailTemplate, updateEmailTemplate, deleteEmailTemplate,
   getExpiringProducts, sendExpiringReminders,
   getBankAccounts, createBankAccount, updateBankAccount, setActiveBank, deleteBankAccount,
-  changePassword, getSystemSettings, saveSystemSettings, testSmtp, getPublicSettings,
+  changePassword, getSystemSettings, saveSystemSettings, testSmtp, getPublicSettings, recalcCommissions,
 } from '../../services/api'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, Edit2, Save, X, Send, CheckSquare, Square, Star, FlaskConical } from 'lucide-react'
@@ -1003,7 +1003,9 @@ function CommissionTab() {
     queryFn: () => getPublicSettings().then(r => r.data.data),
   })
 
+  const { can } = useAuth()
   const [tiers, setTiers] = useState(null)
+  const [applyToAll, setApplyToAll] = useState(false)
   const [initialized, setInitialized] = useState(false)
 
   if (!isLoading && !initialized) {
@@ -1013,9 +1015,18 @@ function CommissionTab() {
 
   const saveMut = useMutation({
     mutationFn: (t) => saveSystemSettings({ commission_tiers: JSON.stringify(t) }),
-    onSuccess: () => {
+    onSuccess: async () => {
       qc.invalidateQueries({ queryKey: ['public-settings'] })
       toast.success('Đã lưu công thức phí ký gửi')
+      if (applyToAll && can('settings:system')) {
+        try {
+          const res = await recalcCommissions({ scope: 'all' })
+          toast.success(`Đã cập nhật hoa hồng cho ${res.data.updated} sản phẩm`)
+          qc.invalidateQueries({ queryKey: ['admin-products'] })
+        } catch (e) {
+          toast.error(e.response?.data?.message || 'Lỗi khi cập nhật hoa hồng cho sản phẩm')
+        }
+      }
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Lỗi'),
   })
@@ -1039,6 +1050,14 @@ function CommissionTab() {
         <p className="text-xs text-gray-500 mb-5">
           Các bậc giá được áp dụng theo thứ tự tăng dần. Bậc cuối (không có giá trần) là mặc định cho mọi giá cao hơn.
         </p>
+
+        {can('settings:system') && (
+          <div className="mb-4 flex items-center gap-3">
+            <label className="form-label text-sm mb-0">Áp dụng cho toàn bộ sản phẩm</label>
+            <input type="checkbox" checked={applyToAll} onChange={(e) => setApplyToAll(e.target.checked)} className="h-4 w-4" />
+            <p className="text-xs text-gray-500">Bật để áp quy tắc mới cho cả sản phẩm cũ (bao gồm đã lưu commission_amount).</p>
+          </div>
+        )}
 
         <div className="space-y-3">
           {tiers.map((tier, i) => (

@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const settings = require('../config/systemSettings');
 const nodemailer = require('nodemailer');
+const recalcService = require('../services/recalcCommissions');
 
 /** GET /api/system-settings */
 const getAll = async (req, res, next) => {
@@ -81,4 +82,15 @@ const getPublic = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { getAll, updateMany, testSmtp, getPublic };
+/** POST /api/system-settings/recalculate-commissions — admin only
+ * Body: { scope: 'active' | 'all' }
+ */
+const recalculateCommissions = async (req, res, next) => {
+  try {
+    const scope = req.body?.scope === 'all' ? 'all' : 'active'
+    const updated = await recalcService.recalculateCommissionAmounts({ scope })
+    res.json({ success: true, updated })
+  } catch (err) { next(err) }
+}
+
+module.exports = { getAll, updateMany, testSmtp, getPublic, recalculateCommissions };

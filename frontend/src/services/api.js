@@ -113,5 +113,6 @@ export const getSystemSettings  = () => api.get('/system-settings')
 export const saveSystemSettings = (data) => api.patch('/system-settings', data)
 export const testSmtp           = (to) => api.post('/system-settings/test-smtp', { to })
 export const getPublicSettings  = () => api.get('/system-settings/public')
+export const recalcCommissions   = (data) => api.post('/system-settings/recalculate-commissions', data)
 
 export default api
