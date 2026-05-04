@@ -27,7 +27,7 @@ async function run() {
 
   // Fix locations
   const locations = [
-    { name: 'HSSV Trường Chinh',           address: 'Cuối ngõ 109 Trường Chinh, Hà Nội',  phone: '0923002177' },
+    { name: 'HSSV Trường Chinh',           address: 'Cuối ngõ 109 Trường Chinh, Hà Nội',  phone: '0369689918' },
     { name: 'HSSV Dịch Vọng Hậu',          address: '48 Dịch Vọng Hậu, Hà Nội',           phone: '0397710510' },
     { name: 'BRAND + HSSV Đào Duy Anh',    address: '07 Đào Duy Anh, Hà Nội',             phone: '0972865615' },
   ];

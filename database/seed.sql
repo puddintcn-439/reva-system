@@ -117,7 +117,7 @@ ON CONFLICT (username) DO NOTHING;
 -- LOCATIONS
 -- ----------------------------------------------------------------
 INSERT INTO locations (name, address, phone, type, sort_order) VALUES
-  ('HSSV Trường Chinh',        'Cuối ngõ 109 Trường Chinh, Hà Nội', '0923002177', 'HSSV',       1),
+  ('HSSV Trường Chinh',        'Cuối ngõ 109 Trường Chinh, Hà Nội', '0369689918', 'HSSV',       1),
   ('HSSV Dịch Vọng Hậu',       '48 Dịch Vọng Hậu, Hà Nội',         '0397710510', 'HSSV',       2),
   ('BRAND + HSSV Đào Duy Anh', '07 Đào Duy Anh, Hà Nội',           '0972865615', 'BRAND+HSSV', 3)
 ON CONFLICT DO NOTHING;
@@ -171,7 +171,7 @@ Nếu bạn muốn gia hạn hoặc thu hồi sản phẩm, vui lòng liên hệ
 
 Trân trọng,
 Đội ngũ REVA Thanh Lý Ký Gửi
-📞 Hotline: 0923002177$body$,
+📞 Hotline: 0369689918$body$,
     'full_name,product_name,product_code,sale_price,consign_end'
   )
 ON CONFLICT (key) DO NOTHING;

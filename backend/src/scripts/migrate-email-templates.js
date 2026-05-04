@@ -36,7 +36,7 @@ Nếu bạn muốn gia hạn hoặc thu hồi sản phẩm, vui lòng liên hệ
 
 Trân trọng,
 Đội ngũ REVA Thanh Lý Ký Gửi
-📞 Hotline: 0923002177$body1$,
+📞 Hotline: 0369689918$body1$,
         'full_name,product_name,product_code,sale_price,consign_end'
       ),
       (
@@ -59,7 +59,7 @@ Chúng tôi sẽ liên hệ với bạn để sắp xếp lịch tiếp nhận s
 
 Trân trọng,
 Đội ngũ REVA Thanh Lý Ký Gửi
-📞 Hotline: 0923002177$body2$,
+📞 Hotline: 0369689918$body2$,
         'full_name,request_id,created_at,request_type,scheduled_date,admin_notes'
       ),
       (
@@ -84,7 +84,7 @@ Chúng tôi sẽ liên hệ để thu xếp thanh toán sớm nhất.
 
 Trân trọng,
 Đội ngũ REVA Thanh Lý Ký Gửi
-📞 Hotline: 0923002177$body3$,
+📞 Hotline: 0369689918$body3$,
         'full_name,settlement_code,period_start,period_end,items_count,total_sale,total_commission,total_payout,lookup_url'
       )
     ON CONFLICT (key) DO NOTHING;
