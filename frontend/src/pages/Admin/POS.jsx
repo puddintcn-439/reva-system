@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { posLookup, posSearch, posCreateSale, posSales, posSale, posMarkPaid, getAdminLocations, getActiveBank } from '../../services/api'
+import { posLookup, posSearch, posCreateSale, posLookupCustomer, posSales, posSale, posMarkPaid, getAdminLocations, getActiveBank } from '../../services/api'
 import toast from 'react-hot-toast'
 import {
   ScanBarcode, Trash2, ShoppingCart, Printer, RotateCcw,
@@ -401,11 +401,35 @@ export default function POS() {
   const totalConsignor  = cart.reduce((s, p) => s + Number(p.consignor_amount  || 0), 0)
 
   // ── Other global state ───────────────────────────────────────────────
-  const [lastSale,       setLastSale]       = useState(null)
-  const [showHistory,    setShowHistory]    = useState(false)
-  const [pendingPaySale, setPendingPaySale] = useState(null)
-  const [paidSale,       setPaidSale]       = useState(null)
+  const [lastSale,              setLastSale]              = useState(null)
+  const [showHistory,           setShowHistory]           = useState(false)
+  const [pendingPaySale,        setPendingPaySale]        = useState(null)
+  const [paidSale,              setPaidSale]              = useState(null)
+  const [customerLookupLoading, setCustomerLookupLoading] = useState(false)
   const qc = useQueryClient()
+
+  // Auto-fill customer name from phone lookup
+  const handlePhoneLookup = async (phone) => {
+    const trimmed = phone.trim()
+    if (trimmed.length < 9) return
+    setCustomerLookupLoading(true)
+    try {
+      const res = await posLookupCustomer(trimmed)
+      const found = res.data?.data
+      if (found?.customer_name) {
+        setTabs(prev => prev.map(t =>
+          t.id === resolvedIdRef.current
+            ? { ...t, customer: { name: found.customer_name, phone: trimmed } }
+            : t
+        ))
+        toast.success(`Khách hàng: ${found.customer_name}`, { duration: 2000 })
+      }
+    } catch {
+      // not found — first-time customer, silently ignore
+    } finally {
+      setCustomerLookupLoading(false)
+    }
+  }
 
 
   // Pre-fill locationId from logged-in user's assigned location
@@ -901,14 +925,20 @@ export default function POS() {
               <label className="text-xs text-gray-400 mb-1 block">
                 Số điện thoại <span className="text-red-500">*</span>
               </label>
-              <input
-                value={customer.phone}
-                onChange={e => patchActive({ customer: { ...customer, phone: e.target.value } })}
-                placeholder="Nhập số điện thoại"
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-hun-black ${
-                  !customer.phone.trim() ? 'border-red-300' : 'border-gray-200'
-                }`}
-              />
+              <div className="relative">
+                <input
+                  value={customer.phone}
+                  onChange={e => patchActive({ customer: { ...customer, phone: e.target.value } })}
+                  onBlur={e => handlePhoneLookup(e.target.value)}
+                  placeholder="Nhập SĐT để tra cứu tên KH"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-hun-black ${
+                    !customer.phone.trim() ? 'border-red-300' : 'border-gray-200'
+                  }`}
+                />
+                {customerLookupLoading && (
+                  <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-400" />
+                )}
+              </div>
             </div>
           </div>
 

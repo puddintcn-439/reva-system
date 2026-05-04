@@ -208,11 +208,25 @@ CREATE INDEX IF NOT EXISTS idx_products_consignor ON products(consignor_id);
 CREATE INDEX IF NOT EXISTS idx_products_location  ON products(location_id);
 
 -- ----------------------------------------------------------------
+-- CUSTOMERS
+-- ----------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS customers (
+  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name       VARCHAR(100) NOT NULL,
+  phone      VARCHAR(20) UNIQUE NOT NULL,
+  notes      TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
+
+-- ----------------------------------------------------------------
 -- SALES (POS)
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sales (
   id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   invoice_code     VARCHAR(20) UNIQUE NOT NULL,
+  customer_id      UUID REFERENCES customers(id) ON DELETE SET NULL,
   customer_name    VARCHAR(100),
   customer_phone   VARCHAR(20),
   total_amount     NUMERIC(12,0) NOT NULL DEFAULT 0,

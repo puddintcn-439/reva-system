@@ -55,9 +55,12 @@ export const returnProduct        = (id, reason) => api.patch(`/products/${id}/r
 export const expireBatch          = () => api.post('/products/expire-batch')
 
 // ── POS ──────────────────────────────────────────────────────────────────────
-export const posSearch     = (q) => api.get('/pos/search', { params: { q, limit: 8 } })
-export const posLookup     = (code) => api.get('/pos/product', { params: { code } })
-export const posCreateSale = (data) => api.post('/pos/sales', data)
+export const posSearch          = (q) => api.get('/pos/search', { params: { q, limit: 8 } })
+export const posLookup          = (code) => api.get('/pos/product', { params: { code } })
+export const posLookupCustomer  = (phone) => api.get('/pos/customer', { params: { phone } })
+export const posGetCustomers    = (params) => api.get('/pos/customers', { params })
+export const posGetCustomer     = (id) => api.get(`/pos/customers/${id}`)
+export const posCreateSale      = (data) => api.post('/pos/sales', data)
 export const posSales      = (params) => api.get('/pos/sales', { params })
 export const posSale       = (id) => api.get(`/pos/sales/${id}`)
 export const posMarkPaid   = (id, payment_reference) => api.patch(`/pos/sales/${id}/mark-paid`, { payment_reference })

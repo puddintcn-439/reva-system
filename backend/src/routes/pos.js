@@ -106,6 +106,15 @@ router.get('/search', authenticate, requirePermission('pos:sale'), ctrl.searchPr
 // Tra cứu sản phẩm theo mã vạch (cần login)
 router.get('/product', authenticate, requirePermission('pos:sale'), ctrl.lookupProduct)
 
+// Tra cứu tên khách hàng theo số điện thoại
+router.get('/customer', authenticate, requirePermission('pos:sale'), ctrl.lookupCustomer)
+
+// Danh sách khách hàng
+router.get('/customers', authenticate, requirePermission('pos:history'), ctrl.getCustomers)
+
+// Chi tiết khách hàng
+router.get('/customers/:id', authenticate, requirePermission('pos:history'), ctrl.getCustomer)
+
 // Tạo hóa đơn
 router.post('/sales', authenticate, requirePermission('pos:sale'), ctrl.createSale)
 

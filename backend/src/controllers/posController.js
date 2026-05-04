@@ -126,6 +126,20 @@ const createSale = async (req, res, next) => {
       }
     }
 
+    // Upsert customer by phone
+    let customerId = null
+    if (customer_phone && customer_phone.trim()) {
+      const cusRes = await client.query(
+        `INSERT INTO customers (name, phone)
+         VALUES ($1, $2)
+         ON CONFLICT (phone) DO UPDATE
+           SET name = EXCLUDED.name, updated_at = NOW()
+         RETURNING id`,
+        [(customer_name || 'Khách').trim(), customer_phone.trim()]
+      )
+      customerId = cusRes.rows[0].id
+    }
+
     // Invoice code: HD + YYMMDD + 4 random digits
     const now = new Date()
     const dateStr = now.toISOString().slice(2, 10).replace(/-/g, '')
@@ -138,10 +152,10 @@ const createSale = async (req, res, next) => {
     // Create sale record
     const saleResult = await client.query(
       `INSERT INTO sales
-         (invoice_code, customer_name, customer_phone, total_amount,
+         (invoice_code, customer_id, customer_name, customer_phone, total_amount,
           discount_amount, final_amount, payment_method, note, location_id, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [invoiceCode, customer_name || null, customer_phone || null,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [invoiceCode, customerId, customer_name || null, customer_phone || null,
        totalAmount, disc, finalAmount, payment_method,
        note || null, location_id || null, req.user?.id || null]
     )
@@ -351,4 +365,116 @@ const cancelSale = async (req, res, next) => {
   }
 }
 
-module.exports = { searchProducts, lookupProduct, createSale, getSales, getSale, markSalePaid, cancelSale }
+/**
+ * GET /pos/customer?phone=...
+ * Tra cứu khách hàng theo số điện thoại từ bảng customers
+ */
+const lookupCustomer = async (req, res, next) => {
+  try {
+    const { phone } = req.query
+    if (!phone || phone.trim().length < 8) {
+      return res.status(400).json({ success: false, message: 'Thiếu số điện thoại' })
+    }
+
+    const result = await db.query(
+      `SELECT id, name AS customer_name, phone AS customer_phone, created_at
+       FROM customers
+       WHERE phone = $1
+       LIMIT 1`,
+      [phone.trim()]
+    )
+
+    res.json({ success: true, data: result.rows[0] || null })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /pos/customers
+ * Danh sách khách hàng mua hàng (phân trang + tìm kiếm)
+ */
+const getCustomers = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 20, search } = req.query
+    const params = []
+    const conds = []
+    let idx = 1
+
+    if (search && search.trim()) {
+      params.push(`%${search.trim()}%`)
+      conds.push(`(c.name ILIKE $${idx} OR c.phone ILIKE $${idx})`)
+      idx++
+    }
+
+    const where = conds.length ? `WHERE ${conds.join(' AND ')}` : ''
+    const offset = (Number(page) - 1) * Number(limit)
+
+    const countResult = await db.query(`SELECT COUNT(*) FROM customers c ${where}`, params)
+    const total = parseInt(countResult.rows[0].count)
+
+    params.push(Number(limit), offset)
+    const result = await db.query(
+      `SELECT c.*,
+              COUNT(s.id) FILTER (WHERE s.status != 'cancelled') AS purchase_count,
+              COALESCE(SUM(s.final_amount) FILTER (WHERE s.status != 'cancelled'), 0) AS total_spent,
+              MAX(s.created_at) FILTER (WHERE s.status != 'cancelled') AS last_purchase_at
+       FROM customers c
+       LEFT JOIN sales s ON s.customer_id = c.id
+       ${where}
+       GROUP BY c.id
+       ORDER BY last_purchase_at DESC NULLS LAST, c.created_at DESC
+       LIMIT $${idx} OFFSET $${idx + 1}`,
+      params
+    )
+
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /pos/customers/:id
+ * Chi tiết khách hàng + lịch sử mua hàng
+ */
+const getCustomer = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const cusRes = await db.query(
+      `SELECT c.*,
+              COUNT(s.id) FILTER (WHERE s.status != 'cancelled') AS purchase_count,
+              COALESCE(SUM(s.final_amount) FILTER (WHERE s.status != 'cancelled'), 0) AS total_spent,
+              MAX(s.created_at) FILTER (WHERE s.status != 'cancelled') AS last_purchase_at
+       FROM customers c
+       LEFT JOIN sales s ON s.customer_id = c.id
+       WHERE c.id = $1
+       GROUP BY c.id`,
+      [id]
+    )
+    if (!cusRes.rows.length) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khách hàng' })
+    }
+
+    const salesRes = await db.query(
+      `SELECT s.id, s.invoice_code, s.final_amount, s.payment_method,
+              s.status, s.created_at,
+              (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS item_count
+       FROM sales s
+       WHERE s.customer_id = $1
+       ORDER BY s.created_at DESC
+       LIMIT 50`,
+      [id]
+    )
+
+    res.json({ success: true, data: { ...cusRes.rows[0], sales: salesRes.rows } })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { searchProducts, lookupProduct, lookupCustomer, getCustomers, getCustomer, createSale, getSales, getSale, markSalePaid, cancelSale }
