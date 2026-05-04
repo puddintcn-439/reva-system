@@ -105,6 +105,10 @@ const createSale = async (req, res, next) => {
     return res.status(400).json({ success: false, message: 'Giỏ hàng trống' })
   }
 
+  if (items.length > 100) {
+    return res.status(400).json({ success: false, message: 'Giỏ hàng không được vượt quá 100 sản phẩm' })
+  }
+
   const VALID_PAYMENT_METHODS = ['cash', 'transfer', 'mixed']
   if (!VALID_PAYMENT_METHODS.includes(payment_method)) {
     return res.status(400).json({ success: false, message: 'Phương thức thanh toán không hợp lệ' })
@@ -181,6 +185,10 @@ const createSale = async (req, res, next) => {
     // Insert sale items + mark products sold
     for (const item of items) {
       const price = Number(item.sale_price)
+      if (!Number.isFinite(price) || price <= 0) {
+        await client.query('ROLLBACK')
+        return res.status(400).json({ success: false, message: 'Giá bán phải là số dương hợp lệ' })
+      }
       const { commission, consignorAmount } = calcCommission(price, tiers)
 
       await client.query(

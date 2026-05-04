@@ -127,6 +127,17 @@ const createProduct = async (req, res, next) => {
       image_url, consign_start, consign_end, code,
     } = req.body;
 
+    if (condition_percent !== undefined && condition_percent !== null) {
+      const cp = Number(condition_percent);
+      if (!Number.isInteger(cp) || cp < 0 || cp > 100) {
+        return res.status(400).json({ success: false, message: 'Tình trạng sản phẩm phải là số nguyên từ 0 đến 100' });
+      }
+    }
+
+    if (!Number.isFinite(Number(sale_price)) || Number(sale_price) <= 0) {
+      return res.status(400).json({ success: false, message: 'Giá bán phải là số dương hợp lệ' });
+    }
+
     const { commission, consignorAmount } = await calculateCommission(sale_price);
 
     // Auto-generate code if not provided: SP + base36 timestamp (6 chars) e.g. SP-A3F2K1

@@ -87,6 +87,16 @@ const loginLimiter = rateLimit({
 });
 app.use('/auth/login', loginLimiter);
 
+// Stricter rate limit on public settlement lookup to prevent phone enumeration
+const settlementLookupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Quá nhiều yêu cầu tra cứu. Vui lòng thử lại sau 15 phút.' },
+});
+app.use('/settlements/lookup', settlementLookupLimiter);
+
 // Logging
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));

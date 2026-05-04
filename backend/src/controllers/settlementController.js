@@ -48,6 +48,7 @@ const lookupSettlement = async (req, res, next) => {
 const getSettlements = async (req, res, next) => {
   try {
     const { status, consignor_id, page = 1, limit = 20 } = req.query;
+    const safeLimit = Math.min(Math.max(1, Number(limit) || 20), 100);
     const params = [];
     const conds = [];
     let idx = 1;
@@ -56,12 +57,12 @@ const getSettlements = async (req, res, next) => {
     if (consignor_id) { params.push(consignor_id); conds.push(`s.consignor_id = $${idx++}`); }
 
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
-    const offset = (Number(page) - 1) * Number(limit);
+    const offset = (Number(page) - 1) * safeLimit;
 
     const countResult = await db.query(`SELECT COUNT(*) FROM settlements s ${where}`, params);
     const total = parseInt(countResult.rows[0].count);
 
-    params.push(Number(limit), offset);
+    params.push(safeLimit, offset);
     const result = await db.query(
       `SELECT s.*, co.full_name, co.phone
        FROM settlements s
@@ -75,7 +76,7 @@ const getSettlements = async (req, res, next) => {
     res.json({
       success: true,
       data: result.rows,
-      pagination: { total, page: Number(page), limit: Number(limit), pages: Math.ceil(total / Number(limit)) },
+      pagination: { total, page: Number(page), limit: safeLimit, pages: Math.ceil(total / safeLimit) },
     });
   } catch (err) {
     next(err);
@@ -95,14 +96,15 @@ const createSettlement = async (req, res, next) => {
 
     await client.query('BEGIN');
 
-    // Get sold products in duration for this consignor
+    // Get sold products in duration for this consignor — lock rows to prevent double-settlement
     const products = await client.query(
       `SELECT * FROM products
        WHERE consignor_id = $1 AND status = 'sold'
          AND sold_at BETWEEN $2 AND $3
          AND id NOT IN (
            SELECT product_id FROM settlement_items WHERE product_id IS NOT NULL
-         )`,
+         )
+       FOR UPDATE`,
       [consignor_id, period_start, period_end]
     );
 
