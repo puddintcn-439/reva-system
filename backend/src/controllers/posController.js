@@ -140,13 +140,22 @@ const createSale = async (req, res, next) => {
       customerId = cusRes.rows[0].id
     }
 
-    // Invoice code: HD + YYMMDD + 4 random digits
+    // Invoice code: HD + YYMMDD + 4 random digits (retry up to 5x to avoid collision)
     const now = new Date()
     const dateStr = now.toISOString().slice(2, 10).replace(/-/g, '')
-    const invoiceCode = `HD${dateStr}${Math.floor(1000 + Math.random() * 9000)}`
+    let invoiceCode
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const candidate = `HD${dateStr}${Math.floor(1000 + Math.random() * 9000)}`
+      const dup = await client.query('SELECT 1 FROM sales WHERE invoice_code = $1', [candidate])
+      if (!dup.rows.length) { invoiceCode = candidate; break }
+    }
+    if (!invoiceCode) {
+      await client.query('ROLLBACK')
+      return res.status(503).json({ success: false, message: 'Không thể tạo mã hóa đơn, vui lòng thử lại' })
+    }
 
     const totalAmount = items.reduce((s, i) => s + Number(i.sale_price), 0)
-    const disc = Math.min(Number(discount_amount) || 0, totalAmount)
+    const disc = Math.max(0, Math.min(Number(discount_amount) || 0, totalAmount))
     const finalAmount = totalAmount - disc
 
     // Create sale record
@@ -339,12 +348,12 @@ const cancelSale = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Hóa đơn đã được hủy trước đó' })
     }
 
-    // Restore all products in this sale back to 'active'
+    // Restore only 'sold' products — do NOT touch 'returned' products
     await client.query(
       `UPDATE products p
        SET status = 'active', sold_at = NULL
        FROM sale_items si
-       WHERE si.sale_id = $1 AND si.product_id = p.id`,
+       WHERE si.sale_id = $1 AND si.product_id = p.id AND p.status = 'sold'`,
       [id]
     )
 
@@ -495,7 +504,7 @@ const createReturn = async (req, res, next) => {
     await client.query('BEGIN')
 
     const saleRes = await client.query(
-      `SELECT id, status, invoice_code FROM sales WHERE id = $1`, [id]
+      `SELECT id, status, invoice_code, final_amount FROM sales WHERE id = $1`, [id]
     )
     if (!saleRes.rows.length) {
       await client.query('ROLLBACK')
@@ -506,11 +515,34 @@ const createReturn = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Hóa đơn đã bị hủy, không thể trả hàng' })
     }
 
+    // Validate refund amount
+    const refund = Number(refund_amount) || 0
+    const maxRefund = Number(saleRes.rows[0].final_amount)
+    if (refund < 0 || refund > maxRefund) {
+      await client.query('ROLLBACK')
+      return res.status(400).json({ success: false, message: `Số tiền hoàn không hợp lệ (0 – ${maxRefund.toLocaleString('vi-VN')}đ)` })
+    }
+
+    // Check for already-returned products (prevent double-return)
+    const returnProductIds = items.filter(i => i.product_id).map(i => i.product_id)
+    if (returnProductIds.length > 0) {
+      const alreadyReturned = await client.query(
+        `SELECT ri.product_id FROM sale_return_items ri
+         JOIN sale_returns r ON r.id = ri.return_id
+         WHERE r.sale_id = $1 AND ri.product_id = ANY($2)`,
+        [id, returnProductIds]
+      )
+      if (alreadyReturned.rows.length > 0) {
+        await client.query('ROLLBACK')
+        return res.status(409).json({ success: false, message: 'Một số sản phẩm đã được trả hàng trước đó' })
+      }
+    }
+
     // Create return record
     const returnRes = await client.query(
       `INSERT INTO sale_returns (sale_id, refund_amount, reason, created_by)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [id, Number(refund_amount) || 0, reason || null, req.user?.id || null]
+      [id, refund, reason || null, req.user?.id || null]
     )
     const ret = returnRes.rows[0]
 

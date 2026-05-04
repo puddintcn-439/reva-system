@@ -4,24 +4,28 @@ const sysSettings = require('../config/systemSettings');
 
 // ─────────────────────────────────────────────────────────────
 // In-process cache: role → Set<permission>
-// Invalidated on first miss; reloads lazily from DB.
+// TTL: 5 minutes — auto-reloads from DB after expiry.
 // ─────────────────────────────────────────────────────────────
 let _permCache = null;
+let _permCacheAt = 0;
+const PERM_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 async function getPermissionsForRole(role) {
-  if (!_permCache) {
+  const now = Date.now();
+  if (!_permCache || now - _permCacheAt > PERM_CACHE_TTL) {
     const result = await db.query('SELECT role, permission FROM role_permissions');
     _permCache = {};
     for (const row of result.rows) {
       if (!_permCache[row.role]) _permCache[row.role] = new Set();
       _permCache[row.role].add(row.permission);
     }
+    _permCacheAt = now;
   }
   return _permCache[role] || new Set();
 }
 
 /** Call this after changing role_permissions in DB to force reload. */
-const invalidatePermCache = () => { _permCache = null; };
+const invalidatePermCache = () => { _permCache = null; _permCacheAt = 0; };
 
 // ─────────────────────────────────────────────────────────────
 

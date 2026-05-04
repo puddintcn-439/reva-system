@@ -77,6 +77,16 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+// Stricter rate limit on login to prevent brute-force
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Quá nhiều lần đăng nhập. Vui lòng thử lại sau 15 phút.' },
+});
+app.use('/auth/login', loginLimiter);
+
 // Logging
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));

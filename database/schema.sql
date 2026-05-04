@@ -352,7 +352,7 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
     'users','locations','announcements','consignors',
     'consignment_requests','products','settlements',
-    'purchase_requests','bank_accounts','email_templates'
+    'purchase_requests','bank_accounts','email_templates','customers'
   ]
   LOOP
     EXECUTE format('

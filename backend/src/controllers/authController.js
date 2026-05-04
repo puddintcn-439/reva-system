@@ -87,6 +87,8 @@ const getMe = async (req, res, next) => {
  */
 const changePassword = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
     const { currentPassword, newPassword } = req.body;
     const result = await db.query('SELECT password FROM users WHERE id = $1', [req.user.id]);
     const isMatch = await bcrypt.compare(currentPassword, result.rows[0].password);
