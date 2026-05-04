@@ -346,7 +346,7 @@ const bulkCreateProducts = async (req, res, next) => {
       const salePrice = Number(item.sale_price);
       if (!salePrice || salePrice <= 0) continue;
 
-      const { commission, consignorAmount } = calculateCommission(salePrice);
+      const { commission, consignorAmount } = await calculateCommission(salePrice);
       const productCode = (item.code || '').trim() || `SP-${Date.now().toString(36).toUpperCase().slice(-6)}`;
 
       const consignorId   = item.consignor_id   || shared.consignor_id   || null;

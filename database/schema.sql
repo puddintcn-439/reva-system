@@ -65,6 +65,16 @@ CREATE TABLE IF NOT EXISTS system_settings (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Seed default commission_tiers setting (used by backend/frontend). Idempotent.
+INSERT INTO system_settings (key, value, label, description, is_secret) VALUES
+  ('commission_tiers',
+   '[{"max":60000,"type":"fixed","amount":20000,"label":"Dưới 60k"},{"max":130000,"type":"fixed","amount":30000,"label":"60k – 130k"},{"max":null,"type":"percent","amount":25,"label":"Trên 130k"}]',
+   'Phí ký gửi',
+   'Công thức tính phí ký gửi theo khoảng giá (JSON)',
+   FALSE
+  )
+ON CONFLICT (key) DO NOTHING;
+
 -- ----------------------------------------------------------------
 -- LOCATIONS
 -- ----------------------------------------------------------------

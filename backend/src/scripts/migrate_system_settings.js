@@ -24,6 +24,7 @@ INSERT INTO system_settings (key, value, label, description, is_secret) VALUES
   ('smtp_pass',   '',                'SMTP Password',   'App Password (không phải mật khẩu đăng nhập)', TRUE),
   ('smtp_from',   'REVA <noreply@reva.vn>', 'SMTP From', 'Tên + email hiển thị khi gửi',             FALSE),
   ('client_urls', 'https://reva.vn', 'Frontend URLs',   'Domain frontend được phép, phân cách bằng dấu phẩy', FALSE),
+  ('commission_tiers', '[{"max":60000,"type":"fixed","amount":20000,"label":"Dưới 60k"},{"max":130000,"type":"fixed","amount":30000,"label":"60k – 130k"},{"max":null,"type":"percent","amount":25,"label":"Trên 130k"}]', 'Phí ký gửi', 'Công thức tính phí ký gửi theo khoảng giá (JSON)', FALSE),
   ('jwt_secret',  '',                'JWT Secret',      'Chuỗi bí mật ký token đăng nhập. Nếu để trống sẽ dùng biến môi trường JWT_SECRET', TRUE)
 ON CONFLICT (key) DO NOTHING;
 `;
