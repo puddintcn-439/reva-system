@@ -1,8 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const morgan = require('morgan');
+const pinoHttp = require('pino-http');
 const path = require('path');
+const logger = require('./config/logger');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
@@ -98,9 +99,17 @@ const settlementLookupLimiter = rateLimit({
 });
 app.use('/settlements/lookup', settlementLookupLimiter);
 
-// Logging
+// HTTP request logging — pino-http (structured JSON in prod, pretty in dev)
 if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan('dev'));
+  app.use(pinoHttp({
+    logger,
+    // Don't log health checks (noise)
+    autoLogging: { ignore: (req) => req.url === '/health' },
+    // Attach requestId to every log so you can trace a full request in Vercel logs
+    genReqId: (req) => req.headers['x-vercel-id'] || req.headers['x-request-id'] || require('crypto').randomUUID(),
+    customSuccessMessage: (req, res) => `${req.method} ${req.url} ${res.statusCode}`,
+    customErrorMessage: (req, res, err) => `${req.method} ${req.url} ${res.statusCode} — ${err.message}`,
+  }))
 }
 
 // Body parser

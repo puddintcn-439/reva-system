@@ -1,21 +1,36 @@
+const logger = require('../config/logger')
+
 /**
  * Central error handler middleware.
  */
 const errorHandler = (err, req, res, _next) => {
-  console.error(err.stack);
+  const statusCode = err.statusCode || 500
 
-  // Validation errors from express-validator are handled in controllers.
-  // This catches unexpected/unhandled errors.
-  const statusCode = err.statusCode || 500;
-  const message = statusCode === 500
-    ? 'Lỗi máy chủ nội bộ'
-    : err.message;
+  // Structured log — req.log is pino-http's per-request logger (has requestId)
+  const log = req.log || logger
+  if (statusCode >= 500) {
+    log.error({
+      err: { message: err.message, stack: err.stack },
+      method: req.method,
+      url: req.url,
+      userId: req.user?.id || null,
+    }, 'Unhandled server error')
+  } else {
+    log.warn({
+      err: { message: err.message },
+      method: req.method,
+      url: req.url,
+      statusCode,
+    }, 'Request error')
+  }
+
+  const message = statusCode === 500 ? 'Lỗi máy chủ nội bộ' : err.message
 
   res.status(statusCode).json({
     success: false,
     message,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
+  })
 };
 
 /**
