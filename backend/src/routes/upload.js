@@ -5,23 +5,12 @@ const { randomUUID } = require('crypto')
 const fs = require('fs')
 const { authenticate } = require('../middleware/auth')
 
-const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads')
-// Ensure uploads directory exists
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true })
-
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_SIZE = 5 * 1024 * 1024 // 5 MB
 
-const storage = multer.diskStorage({
-  destination: UPLOADS_DIR,
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase().replace(/[^a-z0-9.]/g, '')
-    cb(null, `${randomUUID()}${ext || '.jpg'}`)
-  },
-})
-
+// Always use memory storage — works on Vercel (no writable filesystem)
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: MAX_SIZE },
   fileFilter: (req, file, cb) => {
     if (ALLOWED_MIME.includes(file.mimetype)) return cb(null, true)
@@ -30,16 +19,73 @@ const upload = multer({
 })
 
 /**
- * POST /api/upload/image
- * Upload a single product image. Returns { url } pointing to /uploads/<filename>
+ * Upload buffer to Supabase Storage and return the public URL.
+ * Requires env vars: SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_BUCKET (default: "products")
  */
-router.post('/image', authenticate, upload.single('image'), (req, res) => {
-  if (!req.file) return res.status(400).json({ success: false, message: 'Không có file ảnh' })
-  const url = `/uploads/${req.file.filename}`
-  res.json({ success: true, url })
+async function uploadToSupabase (buffer, mimeType, filename) {
+  const supabaseUrl = process.env.SUPABASE_URL
+  const serviceKey  = process.env.SUPABASE_SERVICE_KEY
+  const bucket      = process.env.SUPABASE_BUCKET || 'products'
+  const objectPath  = `images/${filename}`
+
+  const res = await fetch(
+    `${supabaseUrl}/storage/v1/object/${bucket}/${objectPath}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': mimeType,
+        'x-upsert': 'true',
+      },
+      body: buffer,
+    }
+  )
+
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Supabase Storage error ${res.status}: ${text}`)
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${objectPath}`
+}
+
+/**
+ * Fallback: write buffer to local uploads/ directory (dev only).
+ */
+function saveLocally (buffer, filename) {
+  const uploadsDir = path.join(__dirname, '..', '..', 'uploads')
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
+  fs.writeFileSync(path.join(uploadsDir, filename), buffer)
+  return `/uploads/${filename}`
+}
+
+/**
+ * POST /api/upload/image
+ * Upload a single product image.
+ * Production: stores in Supabase Storage, returns public CDN URL.
+ * Dev (no SUPABASE_URL): stores in local uploads/, returns /uploads/<filename>.
+ */
+router.post('/image', authenticate, upload.single('image'), async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'Không có file ảnh' })
+
+    const ext = path.extname(req.file.originalname).toLowerCase().replace(/[^a-z0-9.]/g, '')
+    const filename = `${randomUUID()}${ext || '.jpg'}`
+
+    let url
+    if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+      url = await uploadToSupabase(req.file.buffer, req.file.mimetype, filename)
+    } else {
+      url = saveLocally(req.file.buffer, filename)
+    }
+
+    res.json({ success: true, url })
+  } catch (err) {
+    next(err)
+  }
 })
 
-// Multer error handler
+// Multer + general error handler for this router
 router.use((err, req, res, next) => {
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ success: false, message: 'File quá lớn (tối đa 5 MB)' })
