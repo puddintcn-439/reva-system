@@ -30,7 +30,7 @@ export default function Settlements() {
   const [payNotes, setPayNotes]       = useState('')
   const qc = useQueryClient()
   const { user } = useAuth()
-  const isAdmin = user?.role === 'admin'
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin'
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-settlements', filters],

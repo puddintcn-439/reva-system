@@ -78,7 +78,8 @@ const optionalAuth = async (req, res, next) => {
  * Only allow admin role.
  */
 const requireAdmin = (req, res, next) => {
-  if (req.user?.role !== 'admin') {
+  // Allow both admin and superadmin to pass admin-only checks
+  if (!['superadmin', 'admin'].includes(req.user?.role)) {
     return res.status(403).json({ success: false, message: 'Không có quyền truy cập' });
   }
   next();
@@ -88,7 +89,8 @@ const requireAdmin = (req, res, next) => {
  * Allow admin and staff roles (block 'cashier', 'others', etc.).
  */
 const requireStaff = (req, res, next) => {
-  if (!['admin', 'staff'].includes(req.user?.role)) {
+  // Staff routes should allow admin and superadmin as well
+  if (!['superadmin', 'admin', 'staff'].includes(req.user?.role)) {
     return res.status(403).json({ success: false, message: 'Không có quyền truy cập' });
   }
   next();

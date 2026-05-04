@@ -33,7 +33,8 @@ async function calculateCommission(price) {
 const getProducts = async (req, res, next) => {
   try {
     const { status, category_id, location_id, consignor_id, price_min, price_max, page = 1, limit = 20, search } = req.query;
-    const isAdmin = req.user?.role === 'admin' || req.user?.role === 'staff';
+    // Treat 'superadmin' as admin as well so global product filters work for full-access users
+    const isAdmin = ['superadmin', 'admin', 'staff'].includes(req.user?.role);
 
     const params = [];
     const conds = [];
