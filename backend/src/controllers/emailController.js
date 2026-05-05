@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const { interpolate, sendMail } = require('../config/email');
+const logger = require('../config/logger');
 
 /**
  * GET /api/email-templates
@@ -140,7 +141,7 @@ const sendExpiringReminders = async (req, res, next) => {
         await sendMail(p.consignor_email, subject, body);
         sent++;
       } catch (mailErr) {
-        console.error(`Failed to send to ${p.consignor_email}:`, mailErr.message);
+        logger.error({ err: { message: mailErr.message }, to: p.consignor_email }, '[EMAIL] failed to send expiring reminder');
         skipped++;
       }
     }

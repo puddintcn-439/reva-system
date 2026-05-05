@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const sysSettings = require('./systemSettings');
+const logger = require('./logger');
 
 // Lazy-require db to avoid circular dependency (db → sysSettings → email → db)
 const getDb = () => require('./database');
@@ -40,7 +41,7 @@ const sendMail = async (to, subject, body) => {
 
   if (!transporter) {
     // Dev mode: print to console
-    console.log(`[EMAIL DEV] To: ${to}\nSubject: ${subject}\n${body}\n---`);
+    logger.debug({ to, subject }, '[EMAIL DEV] would send email (no SMTP configured)');
     return { messageId: 'dev-console' };
   }
 
@@ -68,13 +69,13 @@ const sendTemplateEmail = async (templateKey, to, vars = {}) => {
     const db = getDb();
     const tpl = await db.query('SELECT subject, body FROM email_templates WHERE key = $1', [templateKey]);
     if (!tpl.rows.length) {
-      console.warn(`[EMAIL] Template "${templateKey}" not found — skipping`);
+      logger.warn({ templateKey }, '[EMAIL] template not found — skipping');
       return;
     }
     const { subject, body } = tpl.rows[0];
     await sendMail(to, interpolate(subject, vars), interpolate(body, vars));
   } catch (err) {
-    console.error(`[EMAIL] Failed to send "${templateKey}" to ${to}:`, err.message);
+    logger.error({ err: { message: err.message }, templateKey, to }, '[EMAIL] failed to send template email');
   }
 };
 

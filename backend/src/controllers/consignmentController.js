@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const { validationResult } = require('express-validator');
 const { sendTemplateEmail } = require('../config/email');
+const logger = require('../config/logger');
 
 const REQUEST_TYPE_LABEL = { direct: 'Mang đến trực tiếp', online: 'Gửi qua bưu chính', pickup: 'REVA đến lấy' };
 
@@ -168,7 +169,7 @@ const updateStatus = async (req, res, next) => {
           });
         }
       } catch (mailErr) {
-        console.error('[EMAIL] consignment_approved trigger error:', mailErr.message);
+        logger.error({ err: { message: mailErr.message } }, '[EMAIL] consignment_approved trigger error');
       }
     }
   } catch (err) {

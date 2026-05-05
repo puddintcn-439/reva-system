@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const logger = require('../config/logger');
 
 /**
  * Audit logging middleware factory.
@@ -34,7 +35,7 @@ const audit = (action, resource, idFn) => async (req, res, next) => {
           JSON.stringify({ body: req.body, params: req.params }),
           req.ip || req.headers['x-forwarded-for'] || null,
         ]
-      ).catch((err) => console.error('[audit] write error:', err.message));
+      ).catch((err) => logger.error({ err: { message: err.message } }, '[audit] write error'));
     }
 
     return originalJson(body);
