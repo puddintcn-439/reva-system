@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install backend deps
+        run: |
+          cd backend
+          npm ci
+      - name: Run backend tests (with coverage)
+        run: |
+          cd backend
+          npm run test:ci
+      - name: Upload backend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+
+  frontend-smoke:
+    name: Frontend build smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install frontend deps and build
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+      - name: Smoke test dist exists
+        run: |
+          if [ -f frontend/dist/index.html ]; then echo "dist exists"; else echo "dist missing"; exit 1; fi
