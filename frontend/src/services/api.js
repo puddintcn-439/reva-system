@@ -174,4 +174,10 @@ export const testSmtp           = (to) => api.post('/system-settings/test-smtp',
 export const getPublicSettings  = () => api.get('/system-settings/public')
 export const recalcCommissions   = (data) => api.post('/system-settings/recalculate-commissions', data)
 
+// Reports — Excel export (returns blob)
+export const exportFinancialReport = (params) =>
+  api.get('/reports/export/financial', { params, responseType: 'blob' })
+export const exportInventoryReport = (params) =>
+  api.get('/reports/export/inventory', { params, responseType: 'blob' })
+
 export default api

@@ -214,6 +214,22 @@ Dải tối phía dưới thẻ KPI hiển thị toàn bộ lịch sử:
 
 **Top 10 khách hàng ký gửi:** Xếp hạng theo doanh thu, kèm số sản phẩm, hoa hồng và số tiền trả.
 
+### 5.4 Xuất báo cáo tài chính
+
+**Yêu cầu quyền:** `dashboard:view`
+
+Nhấn nút **"Xuất báo cáo tài chính"** (góc trên phải trang Dashboard) để tải file Excel về máy.
+
+File Excel gồm 4 sheet:
+| Sheet | Nội dung |
+|-------|---------|
+| **Tổng quan** | KPI tổng hợp: số SP bán, doanh thu, hoa hồng, tiền trả KGV |
+| **Doanh thu theo tháng** | Bảng chi tiết doanh thu từng tháng, có dòng tổng cộng |
+| **Top ký gửi** | Top 20 ký gửi viên theo doanh thu trong kỳ |
+| **Quyết toán** | Danh sách các phiếu quyết toán đã tạo trong kỳ |
+
+Mặc định xuất **1 năm gần nhất**. Tên file: `REVA_TaichinhReport_<date_from>_<date_to>.xlsx`
+
 ---
 
 ## 6. Bán hàng tại quầy (POS)
@@ -434,6 +450,23 @@ Nhấn **Hết hạn batch** → Tất cả sản phẩm `active` có `consign_e
 - **Sửa:** Nhấn icon bút chì → cập nhật các trường (trừ trạng thái `sold` — không thể đặt thủ công)
 - **Trả hàng:** Nhấn icon hoàn trả → nhập lý do → sản phẩm chuyển sang `returned`
 - **Xóa:** Chỉ xóa được khi sản phẩm không thuộc đơn hàng nào
+
+### 9.8 Xuất tồn kho ra Excel
+
+**Yêu cầu quyền:** `products:view`
+
+Nhấn nút **"Xuất Excel"** (góc trên phải, cạnh nút Thêm sản phẩm).  
+File Excel sẽ xuất **theo bộ lọc đang áp dụng** (trạng thái, danh mục).
+
+File Excel gồm 2 sheet:
+| Sheet | Nội dung |
+|-------|---------|
+| **Tồn kho chi tiết** | Toàn bộ sản phẩm với: mã, tên, trạng thái, danh mục, vị trí, ký gửi viên, giá, hoa hồng, ngày |
+| **Tổng hợp** | Đếm theo trạng thái kèm tổng giá trị, hoa hồng, tiền trả KGV |
+
+- Giới hạn tối đa 5.000 sản phẩm mỗi lần xuất
+- Sheet chi tiết có **Auto Filter** sẵn — có thể lọc trong Excel sau khi tải về
+- Tên file: `REVA_TonKho_<ngày>.xlsx`
 
 ---
 

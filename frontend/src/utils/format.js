@@ -39,3 +39,22 @@ export const fmtDate = (d) =>
  */
 export const fmtDateTime = (d) =>
   d ? new Date(d).toLocaleString('vi-VN') : '—';
+
+/**
+ * Trigger browser download from an axios blob response
+ * @param {import('axios').AxiosResponse} response - axios response with responseType: 'blob'
+ */
+export function downloadBlobResponse(response) {
+  const contentDisposition = response.headers['content-disposition'] || ''
+  const match = contentDisposition.match(/filename="?([^";\r\n]+)"?/)
+  const filename = match ? match[1] : 'export.xlsx'
+
+  const url = URL.createObjectURL(new Blob([response.data]))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}

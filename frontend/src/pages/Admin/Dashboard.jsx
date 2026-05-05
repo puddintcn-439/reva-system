@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getDashboardStats, getDashboardReports } from '../../services/api'
-import { Package, Users, Receipt, ClipboardList, TrendingUp, Award, BarChart2 } from 'lucide-react'
+import { getDashboardStats, getDashboardReports, exportFinancialReport } from '../../services/api'
+import { Package, Users, Receipt, ClipboardList, TrendingUp, Award, BarChart2, FileDown } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { fmtMoney as fmt } from '../../utils/format'
+import { fmtMoney as fmt, downloadBlobResponse } from '../../utils/format'
+import toast from 'react-hot-toast'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, Cell,
@@ -61,6 +62,23 @@ function CardSkeleton() {
 export default function Dashboard() {
   const [period, setPeriod] = useState('day')
   const [months, setMonths] = useState(1)
+  const [exporting, setExporting] = useState(false)
+
+  const handleExportFinancial = async () => {
+    setExporting(true)
+    try {
+      const today   = new Date()
+      const yearAgo = new Date(today); yearAgo.setFullYear(yearAgo.getFullYear() - 1)
+      const toISO   = (d) => d.toISOString().slice(0, 10)
+      const res = await exportFinancialReport({ date_from: toISO(yearAgo), date_to: toISO(today) })
+      downloadBlobResponse(res)
+      toast.success('Đã xuất báo cáo tài chính')
+    } catch {
+      toast.error('Lỗi xuất báo cáo')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
@@ -126,9 +144,19 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Tổng quan</h1>
-        <p className="text-sm text-gray-500 mt-1">Thống kê hoạt động của cửa hàng</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Tổng quan</h1>
+          <p className="text-sm text-gray-500 mt-1">Thống kê hoạt động của cửa hàng</p>
+        </div>
+        <button
+          onClick={handleExportFinancial}
+          disabled={exporting}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-hun-brown text-white text-sm font-medium rounded-lg hover:bg-hun-brown/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+        >
+          <FileDown size={16} />
+          {exporting ? 'Đang xuất...' : 'Xuất báo cáo tài chính'}
+        </button>
       </div>
 
       {/* KPI cards */}

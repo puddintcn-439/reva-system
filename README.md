@@ -428,6 +428,9 @@ GET  /api/purchases              Quản lý thu mua
 PATCH /api/purchases/:id/status
 
 GET  /api/consignors/stats       Thống kê dashboard
+
+GET  /api/reports/export/financial?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD  Xuất báo cáo tài chính (.xlsx)
+GET  /api/reports/export/inventory?status=active&category_id=UUID            Xuất tồn kho (.xlsx)
 ```
 
 ---

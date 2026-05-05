@@ -3,13 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getAdminProducts, getCategories, getAdminLocations, getConsignors,
   createProduct, updateProduct, deleteProduct, bulkCreateProducts,
-  returnProduct, expireBatch, uploadImage,
+  returnProduct, expireBatch, uploadImage, exportInventoryReport,
 } from '../../services/api'
 import toast from 'react-hot-toast'
-import { Plus, Edit2, Trash2, X, Check, Printer, Tag, ListPlus, CornerDownLeft, Clock, Upload } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Check, Printer, Tag, ListPlus, CornerDownLeft, Clock, Upload, FileDown } from 'lucide-react'
 import ProductLabelModal from '../../components/ProductLabelModal'
 import BulkProductModal from '../../components/BulkProductModal'
-import { fmtMoney as fmt } from '../../utils/format'
+import { fmtMoney as fmt, downloadBlobResponse } from '../../utils/format'
 
 const STATUS_LABELS = {
   active: { label: 'Đang bán',   cls: 'bg-green-100 text-green-700' },
@@ -37,6 +37,23 @@ export default function Products() {
   const [filters, setFilters]   = useState({ status: '', category_id: '', consignor_id: '', price_min: '', price_max: '', page: 1 })
   const [modal, setModal]       = useState(null) // null | { mode: 'create'|'edit', data: {} }
   const [imageUrl, setImageUrl] = useState('')
+  const [exportingInventory, setExportingInventory] = useState(false)
+
+  const handleExportInventory = async () => {
+    setExportingInventory(true)
+    try {
+      const params = {}
+      if (filters.status)      params.status      = filters.status
+      if (filters.category_id) params.category_id = filters.category_id
+      const res = await exportInventoryReport(params)
+      downloadBlobResponse(res)
+      toast.success('Đã xuất tồn kho')
+    } catch {
+      toast.error('Lỗi xuất tồn kho')
+    } finally {
+      setExportingInventory(false)
+    }
+  }
 
   const openModal = (m) => {
     setModal(m)
@@ -171,6 +188,15 @@ export default function Products() {
           </button>
           <button onClick={() => openModal({ mode: 'create', data: emptyForm() })} className="btn-primary text-sm gap-2">
             <Plus size={16} /> Thêm sản phẩm
+          </button>
+          <button
+            onClick={handleExportInventory}
+            disabled={exportingInventory}
+            className="inline-flex items-center gap-2 px-3 py-2 border border-hun-brown text-hun-brown text-sm font-medium rounded-lg hover:bg-hun-brown/5 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            title="Xuất tồn kho theo bộ lọc hiện tại"
+          >
+            <FileDown size={15} />
+            {exportingInventory ? 'Đang xuất...' : 'Xuất Excel'}
           </button>
         </div>
       </div>

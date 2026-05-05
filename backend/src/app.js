@@ -21,6 +21,7 @@ const emailRoutes = require('./routes/email');
 const bankRoutes  = require('./routes/banks');
 const systemSettingsRoutes = require('./routes/systemSettings');
 const uploadRoutes = require('./routes/upload');
+const reportRoutes = require('./routes/reports');
 const { errorHandler } = require('./middleware/errorHandler');
 const sysSettings = require('./config/systemSettings');
 
@@ -146,6 +147,7 @@ app.use('/email', emailRoutes);
 app.use('/banks', bankRoutes);
 app.use('/system-settings', systemSettingsRoutes);
 app.use('/upload', uploadRoutes);
+app.use('/reports', reportRoutes);
 
 // Health check — UptimeRobot monitors this endpoint
 app.get('/health', async (req, res) => {
