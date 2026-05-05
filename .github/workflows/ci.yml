@@ -29,6 +29,36 @@ jobs:
         with:
           name: backend-coverage
           path: backend/coverage
+      - name: Post coverage summary to PR
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs')
+            const { context, github } = require('@actions/github')
+            const covPath = 'backend/coverage/coverage-summary.json'
+            if (!fs.existsSync(covPath)) {
+              console.log('No coverage-summary.json found; skipping PR comment.')
+              return
+            }
+            const data = JSON.parse(fs.readFileSync(covPath, 'utf8'))
+            const total = data.total || data
+            const fmt = (k) => {
+              const v = total[k] || {}
+              return `${v.pct ?? 0}% (${v.covered ?? 0}/${v.total ?? 0})`
+            }
+            const body = `### Jest Coverage Summary\n\n- **Statements:** ${fmt('statements')}\n- **Branches:** ${fmt('branches')}\n- **Functions:** ${fmt('functions')}\n- **Lines:** ${fmt('lines')}\n\n[View workflow run](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})`
+            const issue_number = context.issue.number
+            if (!issue_number) {
+              console.log('No pull request number in context; skipping comment.')
+              return
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body
+            })
 
   frontend-smoke:
     name: Frontend build smoke
