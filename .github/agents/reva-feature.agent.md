@@ -84,7 +84,42 @@ Report kết quả review: số issues tìm thấy, đã fix gì.
 
 Đọc và tuân thủ: [Docs Update Guide](./references/docs-update.md)
 
+### 5a. Dependency check
+
+Trước khi commit, kiểm tra tất cả package mới dùng trong code đã có trong `package.json` chưa:
+
+```bash
+# Scan imports trong các file đã thêm/sửa
+grep -r "from '" frontend/src/pages/Admin/NewFeature.jsx  # kiểm tra từng import
+
+# Đối chiếu với frontend/package.json dependencies
+# Nếu thiếu package → thêm vào package.json trước khi commit
+```
+
+**Các package hay bị quên:**
+- `lucide-react` — icon library (nếu dùng bất kỳ icon nào)
+- Bất kỳ package nào import lần đầu trong tính năng mới
+
+### 5b. Build verification
+
+**Bắt buộc chạy trước khi commit** — đảm bảo build không lỗi:
+
+```bash
+cd frontend && npm run build
+# Phải thấy: "✓ N modules transformed" và KHÔNG có error
+# Nếu lỗi "Rollup failed to resolve import" → thiếu dependency trong package.json
+```
+
+Nếu không thể chạy build (môi trường không có Node), thì:
+1. Kiểm tra thủ công TẤT CẢ `import` trong file đã sửa/tạo
+2. Đối chiếu với `dependencies` trong `frontend/package.json`
+3. Thêm package còn thiếu vào `package.json` trước khi commit
+
+### 5c. Docs + commit
+
 **Checklist cuối:**
+- [ ] Tất cả package import đã có trong `package.json` ✅
+- [ ] `npm run build` pass (hoặc đã verify thủ công)
 - [ ] `README.md` — thêm vào API Endpoints nếu có route mới
 - [ ] `HUONG_DAN_SU_DUNG.md` — thêm section mới nếu là tính năng admin/public
 - [ ] `DEPLOYMENT_ENV.md` — thêm env var mới nếu có
