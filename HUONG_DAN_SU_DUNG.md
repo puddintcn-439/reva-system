@@ -765,7 +765,50 @@ Tất cả người dùng đều có thể đổi mật khẩu của mình:
 
 ---
 
-## 16. Quy trình nghiệp vụ đầu cuối
+## 16. Hộp thư nội bộ (Inbox)
+
+Tính năng chat nội bộ giúp toàn bộ nhân viên trong hệ thống trao đổi thông tin, đặt câu hỏi, và thảo luận nghiệp vụ trực tiếp mà không cần qua ứng dụng ngoài.
+
+### 16.1 Truy cập
+
+Vào **Admin** → menu trái → **Hộp thư nội bộ** (biểu tượng bong bóng chat).
+
+> **Quyền:** Tất cả tài khoản (kể cả `viewer`, `cashier`) đều có thể xem và tham gia hội thoại.
+
+### 16.2 Tạo hội thoại mới
+
+1. Nhấn nút **"+ Hội thoại mới"** góc trên phải
+2. Nhập tiêu đề (tối đa 200 ký tự) — ví dụ: *"Quy trình nhận hàng cuối tuần"*, *"Hỏi về quyết toán tháng 4"*
+3. Nhấn **Tạo** hoặc Enter → hội thoại mở ngay, sẵn sàng nhắn tin
+
+### 16.3 Gửi tin nhắn
+
+- Nhập nội dung vào ô bên dưới (tối đa 4.000 ký tự)
+- **Enter** → gửi ngay
+- **Shift + Enter** → xuống dòng mà không gửi
+- Tin nhắn mới từ người khác sẽ tự động cập nhật sau **5 giây**
+
+### 16.4 Xóa tin nhắn
+
+- Hover vào tin nhắn → nhấn nút **×** nhỏ góc trên bong bóng
+- Mỗi người chỉ xóa được **tin của mình**
+- Admin / Manager có thể xóa tin nhắn của bất kỳ ai
+
+### 16.5 Đóng / Mở lại hội thoại *(Admin / Manager)*
+
+- Khi hội thoại đã giải quyết xong → nhấn **"Đóng"** để khoá, không ai gửi thêm được
+- Nhấn **"Mở lại"** để tiếp tục thảo luận nếu cần
+- Hội thoại đóng vẫn xem được toàn bộ lịch sử
+
+### 16.6 Xóa hội thoại *(Admin / Manager)*
+
+Nhấn **"Xóa"** → xác nhận → toàn bộ tin nhắn trong hội thoại bị xóa vĩnh viễn, không thể khôi phục.
+
+> ⚠️ Hành động này **không thể hoàn tác**.
+
+---
+
+## 17. Quy trình nghiệp vụ đầy đủ
 
 ### 16.1 Tiếp nhận khách ký gửi mới
 
@@ -814,7 +857,7 @@ Tất cả người dùng đều có thể đổi mật khẩu của mình:
 
 ---
 
-## 17. Câu hỏi thường gặp & Xử lý sự cố
+## 18. Câu hỏi thường gặp & Xử lý sự cố
 
 ### Q: Sản phẩm không xuất hiện khi tìm kiếm ở POS
 

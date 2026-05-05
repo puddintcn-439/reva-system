@@ -434,6 +434,15 @@ GET  /api/reports/export/inventory?status=active&category_id=UUID            Xu�
 
 POST /api/ai/suggest-product     AI gợi ý giá bán + mô tả sản phẩm (yêu cầu GEMINI_API_KEY)
 POST /api/ai/analyze-dashboard   AI nhận xét số liệu kinh doanh Dashboard
+
+GET    /api/inbox/threads                   Danh sách hội thoại nội bộ
+POST   /api/inbox/threads                   Tạo hội thoại mới
+GET    /api/inbox/threads/:id/messages      Lấy tin nhắn trong hội thoại
+POST   /api/inbox/threads/:id/messages      Gửi tin nhắn
+PATCH  /api/inbox/threads/:id/close         Đóng hội thoại (inbox:manage)
+PATCH  /api/inbox/threads/:id/reopen        Mở lại hội thoại (inbox:manage)
+DELETE /api/inbox/threads/:id               Xóa hội thoại (inbox:manage)
+DELETE /api/inbox/messages/:id              Xóa tin nhắn (chủ tin hoặc inbox:manage)
 ```
 
 ---

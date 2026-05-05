@@ -164,11 +164,15 @@ export default function Inbox() {
     queryFn: () => getInboxMessages(selectedId).then(r => r.data.data),
     enabled: !!selectedId,
     refetchInterval: 5_000,
-    onSuccess: (data) => {
-      if (data.length) setLastMessageAt(data[data.length - 1].created_at)
-    },
   })
   const messages = msgsData || []
+
+  // Track latest message timestamp for cursor-based polling
+  useEffect(() => {
+    if (msgsData?.length) {
+      setLastMessageAt(msgsData[msgsData.length - 1].created_at)
+    }
+  }, [msgsData])
 
   // ── Auto-scroll to bottom on new messages ─────────────────────────────────
   useEffect(() => {
