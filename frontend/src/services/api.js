@@ -13,17 +13,69 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Handle 401
+// ── Refresh token queue ────────────────────────────────────────────
+let isRefreshing = false
+let failedQueue = []
+
+function processQueue(error, token = null) {
+  failedQueue.forEach(({ resolve, reject }) => error ? reject(error) : resolve(token))
+  failedQueue = []
+}
+
+function clearSession() {
+  localStorage.removeItem('hun_token')
+  localStorage.removeItem('hun_refresh_token')
+  localStorage.removeItem('hun_user')
+  if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+    window.location.href = '/admin/login'
+  }
+}
+
+// Handle 401 — try refresh before clearing session
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('hun_token')
-      localStorage.removeItem('hun_user')
-      if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
-        window.location.href = '/admin/login'
+  async (err) => {
+    const originalRequest = err.config
+
+    if (err.response?.status === 401 && !originalRequest._retry) {
+      const refreshToken = localStorage.getItem('hun_refresh_token')
+
+      if (!refreshToken) {
+        clearSession()
+        return Promise.reject(err)
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`
+          return api(originalRequest)
+        })
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        const baseURL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api'
+        const response = await axios.post(`${baseURL}/auth/refresh`, { refreshToken })
+        const { token, refreshToken: newRefreshToken } = response.data
+        localStorage.setItem('hun_token', token)
+        localStorage.setItem('hun_refresh_token', newRefreshToken)
+        api.defaults.headers.common.Authorization = `Bearer ${token}`
+        processQueue(null, token)
+        originalRequest.headers.Authorization = `Bearer ${token}`
+        return api(originalRequest)
+      } catch (refreshErr) {
+        processQueue(refreshErr, null)
+        clearSession()
+        return Promise.reject(refreshErr)
+      } finally {
+        isRefreshing = false
       }
     }
+
     return Promise.reject(err)
   }
 )

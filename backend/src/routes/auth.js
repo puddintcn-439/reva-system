@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { body } = require('express-validator');
-const { login, getMe, changePassword, getUsers, createUser, updateUser, deleteUser } = require('../controllers/authController');
+const { login, getMe, changePassword, getUsers, createUser, updateUser, deleteUser, refresh, logout } = require('../controllers/authController');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { audit } = require('../middleware/audit');
 
@@ -95,5 +95,9 @@ router.get('/users',     authenticate, requirePermission('users:manage'), getUse
 router.post('/users',    authenticate, requirePermission('users:manage'), audit('create','user'), createUser);
 router.put('/users/:id', authenticate, requirePermission('users:manage'), audit('update','user'), updateUser);
 router.delete('/users/:id', authenticate, requirePermission('users:manage'), audit('delete','user'), deleteUser);
+
+// ── Refresh + Logout (public — validated by refresh token) ────
+router.post('/refresh', refresh);
+router.post('/logout', logout);
 
 module.exports = router;

@@ -1,8 +1,20 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { randomBytes, createHash } = require('crypto');
 const { validationResult } = require('express-validator');
 const db = require('../config/database');
 const sysSettings = require('../config/systemSettings');
+
+// ── Refresh token helpers ───────────────────────────────────────────────────
+const REFRESH_EXPIRES_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function generateRefreshToken() {
+  return randomBytes(32).toString('hex'); // 64 hex chars
+}
+
+function hashToken(token) {
+  return createHash('sha256').update(token).digest('hex');
+}
 
 /** Fetch permissions array for a given role from DB */
 async function getPermissions(role) {
@@ -46,14 +58,23 @@ const login = async (req, res, next) => {
 
     const permissions = await getPermissions(user.role);
 
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
       { id: user.id, role: user.role },
       await sysSettings.getJwtSecret(),
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '1h' }
+    );
+
+    // Issue refresh token
+    const rawRefresh = generateRefreshToken();
+    const tokenHash = hashToken(rawRefresh);
+    const expiresAt = new Date(Date.now() + REFRESH_EXPIRES_MS);
+    await db.query(
+      `INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
+      [user.id, tokenHash, expiresAt]
     );
 
     const { password: _, ...userInfo } = user;
-    res.json({ success: true, token, user: { ...userInfo, permissions } });
+    res.json({ success: true, token: accessToken, refreshToken: rawRefresh, user: { ...userInfo, permissions } });
   } catch (err) {
     next(err);
   }
@@ -191,4 +212,76 @@ const deleteUser = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { login, getMe, changePassword, getUsers, createUser, updateUser, deleteUser };
+/**
+ * POST /api/auth/refresh
+ * Exchange a valid refresh token for a new access token (rotation).
+ */
+const refresh = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(401).json({ success: false, message: 'Thiếu refresh token' });
+    }
+
+    const tokenHash = hashToken(refreshToken);
+    const result = await db.query(
+      `SELECT rt.id, rt.user_id, u.role, u.is_active
+       FROM refresh_tokens rt
+       JOIN users u ON u.id = rt.user_id
+       WHERE rt.token_hash = $1 AND rt.revoked = FALSE AND rt.expires_at > NOW()`,
+      [tokenHash]
+    );
+
+    if (!result.rows.length) {
+      return res.status(401).json({ success: false, message: 'Refresh token không hợp lệ hoặc đã hết hạn' });
+    }
+
+    const row = result.rows[0];
+    if (!row.is_active) {
+      return res.status(401).json({ success: false, message: 'Tài khoản bị vô hiệu hóa' });
+    }
+
+    // Rotate: revoke current, issue new
+    const newRaw = generateRefreshToken();
+    const newHash = hashToken(newRaw);
+    const newExpiry = new Date(Date.now() + REFRESH_EXPIRES_MS);
+
+    await db.query('UPDATE refresh_tokens SET revoked = TRUE WHERE id = $1', [row.id]);
+    await db.query(
+      `INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
+      [row.user_id, newHash, newExpiry]
+    );
+
+    const newAccessToken = jwt.sign(
+      { id: row.user_id, role: row.role },
+      await sysSettings.getJwtSecret(),
+      { expiresIn: process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || '1h' }
+    );
+
+    res.json({ success: true, token: newAccessToken, refreshToken: newRaw });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/auth/logout
+ * Revoke the refresh token server-side.
+ */
+const logout = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+      const tokenHash = hashToken(refreshToken);
+      await db.query(
+        'UPDATE refresh_tokens SET revoked = TRUE WHERE token_hash = $1',
+        [tokenHash]
+      );
+    }
+    res.json({ success: true, message: 'Đã đăng xuất' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { login, getMe, changePassword, getUsers, createUser, updateUser, deleteUser, refresh, logout };

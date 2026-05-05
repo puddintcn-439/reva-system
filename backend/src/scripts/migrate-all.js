@@ -64,6 +64,20 @@ async function migrateAll () {
     `)
     await client.query(`CREATE INDEX IF NOT EXISTS idx_sale_return_items_return ON sale_return_items(return_id)`)
 
+    // ── refresh_tokens ──────────────────────────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash  CHAR(64) NOT NULL UNIQUE,
+        expires_at  TIMESTAMPTZ NOT NULL,
+        revoked     BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`)
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`)
+
     // ── commission_tiers seed (idempotent) ─────────────────────────────────
     await client.query(`
       INSERT INTO system_settings (key, value, label, description, is_secret) VALUES

@@ -8,6 +8,16 @@ const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 
+// Sentry — init early so it can instrument all modules (only when DSN is set)
+if (process.env.SENTRY_DSN) {
+  const Sentry = require('@sentry/node');
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'production',
+    tracesSampleRate: 0.1,
+  });
+}
+
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const consignmentRoutes = require('./routes/consignments');
