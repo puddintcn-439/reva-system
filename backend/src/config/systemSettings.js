@@ -137,8 +137,9 @@ async function setMany(map) {
 async function getJwtSecret() {
   const val = await get('jwt_secret', 'JWT_SECRET');
   if (val) return val;
-  // Fallback: derive a stable secret from DB connection string so login never crashes
-  return process.env.DATABASE_URL || process.env.DB_PASSWORD || 'reva_fallback_secret_change_me';
+  // Do NOT fall back to DB connection strings or hard-coded defaults.
+  // Return empty string if no secret is configured so callers can fail-fast.
+  return '';
 }
 
 /**
