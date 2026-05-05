@@ -624,4 +624,4 @@ const getReturns = async (req, res, next) => {
   }
 }
 
-module.exports = { searchProducts, lookupProduct, lookupCustomer, getCustomers, getCustomer, createSale, getSales, getSale, markSalePaid, cancelSale, createReturn, getReturns }
+module.exports = { searchProducts, lookupProduct, lookupCustomer, getCustomers, getCustomer, createSale, getSales, getSale, markSalePaid, cancelSale, createReturn, getReturns, calcCommission }

@@ -417,4 +417,4 @@ const getCommissionTiersPublic = async (req, res, next) => {
   }
 };
 
-module.exports = { getProducts, getProduct, createProduct, bulkCreateProducts, updateProduct, deleteProduct, getCategories, returnProduct, expireBatch, getCommissionTiersPublic };
+module.exports = { getProducts, getProduct, createProduct, bulkCreateProducts, updateProduct, deleteProduct, getCategories, returnProduct, expireBatch, getCommissionTiersPublic, calculateCommission };

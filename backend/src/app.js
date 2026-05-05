@@ -53,7 +53,11 @@ app.use(cors({
       const isAllowed = allowed.some((pattern) => {
         if (pattern === origin) return true;
         if (pattern.includes('*')) {
-          const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace('\\*', '[^.]+') + '$');
+          // Replace '*' with a temporary placeholder, escape the rest, then
+          // replace the placeholder with a pattern matching a single subdomain segment.
+          const placeholder = '__WILDCARD__';
+          const escaped = pattern.replace(/\*/g, placeholder).replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(new RegExp(placeholder, 'g'), '[^.]+');
+          const regex = new RegExp('^' + escaped + '$');
           return regex.test(origin);
         }
         return false;

@@ -93,4 +93,7 @@ router.use((err, req, res, next) => {
   res.status(400).json({ success: false, message: err.message || 'Lỗi upload' })
 })
 
+// Export helper functions for testing while keeping default export as router
 module.exports = router
+module.exports.uploadToSupabase = uploadToSupabase
+module.exports.saveLocally = saveLocally
