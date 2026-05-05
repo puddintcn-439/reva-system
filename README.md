@@ -431,6 +431,9 @@ GET  /api/consignors/stats       Thống kê dashboard
 
 GET  /api/reports/export/financial?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD  Xuất báo cáo tài chính (.xlsx)
 GET  /api/reports/export/inventory?status=active&category_id=UUID            Xuất tồn kho (.xlsx)
+
+POST /api/ai/suggest-product     AI gợi ý giá bán + mô tả sản phẩm (yêu cầu GEMINI_API_KEY)
+POST /api/ai/analyze-dashboard   AI nhận xét số liệu kinh doanh Dashboard
 ```
 
 ---

@@ -30,6 +30,7 @@ Toàn bộ env vars đặt trong **một Vercel project duy nhất** (Production
 |-----|--------|---------|
 | `SENTRY_DSN` | Error tracking backend | sentry.io → project **node** → Settings → **Client Keys (DSN)** |
 | `VITE_SENTRY_DSN` | Error tracking frontend (React + Session Replay) | sentry.io → project **javascript** → Settings → **Client Keys (DSN)** |
+| `GEMINI_API_KEY` | Google Gemini AI — gợi ý giá SP, phân tích Dashboard | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (free tier: 15 RPM) |
 
 ## Env vars tùy chọn
 
@@ -57,6 +58,7 @@ Toàn bộ env vars đặt trong **một Vercel project duy nhất** (Production
 - [ ] `SUPABASE_URL` + `SUPABASE_SERVICE_KEY` + `SUPABASE_BUCKET`
 - [ ] `SENTRY_DSN` — project `node`
 - [ ] `VITE_SENTRY_DSN` — project `javascript`
+- [ ] `GEMINI_API_KEY` — lấy tại aistudio.google.com/apikey (tùy chọn, bật tính năng AI)
 - [ ] SMTP_* (nếu muốn email hoạt động ngay, không set trong Admin UI)
 
 ---

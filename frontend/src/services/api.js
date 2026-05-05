@@ -180,4 +180,8 @@ export const exportFinancialReport = (params) =>
 export const exportInventoryReport = (params) =>
   api.get('/reports/export/inventory', { params, responseType: 'blob' })
 
+// AI features
+export const suggestProduct    = (data) => api.post('/ai/suggest-product', data)
+export const analyzeDashboard  = (data) => api.post('/ai/analyze-dashboard', data)
+
 export default api

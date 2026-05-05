@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getDashboardStats, getDashboardReports, exportFinancialReport } from '../../services/api'
-import { Package, Users, Receipt, ClipboardList, TrendingUp, Award, BarChart2, FileDown } from 'lucide-react'
+import { getDashboardStats, getDashboardReports, exportFinancialReport, analyzeDashboard } from '../../services/api'
+import { Package, Users, Receipt, ClipboardList, TrendingUp, Award, BarChart2, FileDown, Sparkles, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { fmtMoney as fmt, downloadBlobResponse } from '../../utils/format'
 import toast from 'react-hot-toast'
@@ -63,6 +63,28 @@ export default function Dashboard() {
   const [period, setPeriod] = useState('day')
   const [months, setMonths] = useState(1)
   const [exporting, setExporting] = useState(false)
+  const [aiInsight, setAiInsight] = useState('')
+  const [aiInsightLoading, setAiInsightLoading] = useState(false)
+
+  const handleAnalyzeDashboard = async () => {
+    if (!data) return
+    setAiInsightLoading(true)
+    try {
+      const res = await analyzeDashboard({
+        total_revenue:    data.products?.total_revenue,
+        total_commission: data.products?.total_commission,
+        items_sold:       data.products?.sold_count,
+        items_active:     data.products?.active_count,
+        items_pending:    data.products?.pending_count,
+        period_months:    months,
+      })
+      setAiInsight(res.data.data.summary)
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Lỗi phân tích AI')
+    } finally {
+      setAiInsightLoading(false)
+    }
+  }
 
   const handleExportFinancial = async () => {
     setExporting(true)
@@ -157,6 +179,14 @@ export default function Dashboard() {
           <FileDown size={16} />
           {exporting ? 'Đang xuất...' : 'Xuất báo cáo tài chính'}
         </button>
+        <button
+          onClick={handleAnalyzeDashboard}
+          disabled={aiInsightLoading || isLoading}
+          className="inline-flex items-center gap-2 px-4 py-2 border border-purple-300 text-purple-600 text-sm font-medium rounded-lg hover:bg-purple-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+        >
+          <Sparkles size={16} />
+          {aiInsightLoading ? 'Đang phân tích...' : 'Phân tích AI'}
+        </button>
       </div>
 
       {/* KPI cards */}
@@ -178,6 +208,21 @@ export default function Dashboard() {
               <p className="text-xs text-gray-400 mt-1">{sub}</p>
             </Link>
           ))}
+        </div>
+      )}
+
+      {/* AI Insight panel */}
+      {aiInsight && (
+        <div className="flex items-start gap-3 bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <Sparkles size={18} className="text-purple-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-purple-600 mb-1 uppercase tracking-wide">Nhận xét AI</p>
+            <p className="text-sm text-gray-700 leading-relaxed">{aiInsight}</p>
+          </div>
+          <button
+            onClick={() => setAiInsight('')}
+            className="text-purple-300 hover:text-purple-500 flex-shrink-0"
+          ><X size={16} /></button>
         </div>
       )}
 

@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getAdminProducts, getCategories, getAdminLocations, getConsignors,
   createProduct, updateProduct, deleteProduct, bulkCreateProducts,
-  returnProduct, expireBatch, uploadImage, exportInventoryReport,
+  returnProduct, expireBatch, uploadImage, exportInventoryReport, suggestProduct,
 } from '../../services/api'
 import toast from 'react-hot-toast'
-import { Plus, Edit2, Trash2, X, Check, Printer, Tag, ListPlus, CornerDownLeft, Clock, Upload, FileDown } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Check, Printer, Tag, ListPlus, CornerDownLeft, Clock, Upload, FileDown, Sparkles } from 'lucide-react'
 import ProductLabelModal from '../../components/ProductLabelModal'
 import BulkProductModal from '../../components/BulkProductModal'
 import { fmtMoney as fmt, downloadBlobResponse } from '../../utils/format'
@@ -38,6 +38,8 @@ export default function Products() {
   const [modal, setModal]       = useState(null) // null | { mode: 'create'|'edit', data: {} }
   const [imageUrl, setImageUrl] = useState('')
   const [exportingInventory, setExportingInventory] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const formRef = useRef(null)
 
   const handleExportInventory = async () => {
     setExportingInventory(true)
@@ -52,6 +54,28 @@ export default function Products() {
       toast.error('Lỗi xuất tồn kho')
     } finally {
       setExportingInventory(false)
+    }
+  }
+
+  const handleAISuggest = async () => {
+    if (!formRef.current) return
+    const els = formRef.current.elements
+    const name = els['name']?.value?.trim()
+    if (!name) { toast.error('Nhập tên sản phẩm trước'); return }
+    const conditionPercent = Number(els['condition_percent']?.value) || 90
+    const categoryId = els['category_id']?.value
+    const categoryName = categories.find((c) => c.id === categoryId)?.name || ''
+    setAiLoading(true)
+    try {
+      const res = await suggestProduct({ name, condition_percent: conditionPercent, category_name: categoryName })
+      const { suggested_price, description } = res.data.data
+      if (els['sale_price'])  els['sale_price'].value  = suggested_price
+      if (els['description']) els['description'].value = description
+      toast.success('AI đã gợi ý giá và mô tả!')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Lỗi gọi AI')
+    } finally {
+      setAiLoading(false)
     }
   }
 
@@ -431,11 +455,23 @@ export default function Products() {
               <h2 className="font-semibold">{modal.mode === 'create' ? 'Thêm sản phẩm mới' : 'Chỉnh sửa sản phẩm'}</h2>
               <button onClick={() => setModal(null)} className="p-1 hover:bg-gray-100 rounded"><X size={20} /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form ref={formRef} onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="form-label">Tên sản phẩm *</label>
-                  <input name="name" defaultValue={modal.data.name} required className="form-input" />
+                  <div className="flex gap-2">
+                    <input name="name" defaultValue={modal.data.name} required className="form-input flex-1" />
+                    <button
+                      type="button"
+                      onClick={handleAISuggest}
+                      disabled={aiLoading}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-purple-300 text-purple-600 rounded-lg hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                      title="AI gợi ý giá và mô tả"
+                    >
+                      <Sparkles size={14} />
+                      {aiLoading ? 'Đang hỏi AI...' : 'Gợi ý AI'}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="form-label">Mã sản phẩm</label>
