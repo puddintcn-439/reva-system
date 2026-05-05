@@ -12,9 +12,9 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    if (import.meta.env.VITE_SENTRY_DSN) {
-      Sentry.captureException(error, { extra: { componentStack: info.componentStack } })
-    }
+    // Sentry is already initialised by src/instrument.js — captureException
+    // is a no-op when the SDK is disabled (no VITE_SENTRY_DSN set).
+    Sentry.captureException(error, { extra: { componentStack: info.componentStack } })
   }
 
   render() {

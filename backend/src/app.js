@@ -8,16 +8,6 @@ const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 
-// Sentry — init early so it can instrument all modules (only when DSN is set)
-if (process.env.SENTRY_DSN) {
-  const Sentry = require('@sentry/node');
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV || 'production',
-    tracesSampleRate: 0.1,
-  });
-}
-
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const consignmentRoutes = require('./routes/consignments');
@@ -173,7 +163,14 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
-// Error handler
+// Sentry Express error handler — captures errors passed via next(err)
+// Must be registered AFTER all routes and BEFORE the custom error handler.
+// Safe to call when SENTRY_DSN is unset because Sentry.init() silently
+// disables the SDK when no DSN is provided.
+const Sentry = require('@sentry/node');
+Sentry.setupExpressErrorHandler(app);
+
+// Custom error handler
 app.use(errorHandler);
 
 module.exports = app;

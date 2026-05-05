@@ -15,16 +15,7 @@ const errorHandler = (err, req, res, _next) => {
       url: req.url,
       userId: req.user?.id || null,
     }, 'Unhandled server error')
-    // Report to Sentry when DSN configured
-    if (process.env.SENTRY_DSN) {
-      try {
-        const Sentry = require('@sentry/node')
-        Sentry.captureException(err, {
-          user: req.user ? { id: req.user.id, username: req.user.username } : undefined,
-          extra: { method: req.method, url: req.url },
-        })
-      } catch { /* Sentry not initialised */ }
-    }
+    // Sentry capture is handled automatically by setupExpressErrorHandler in app.js
   } else {
     log.warn({
       err: { message: err.message },

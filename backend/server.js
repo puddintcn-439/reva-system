@@ -1,3 +1,7 @@
+// instrument.js MUST be the first require so Sentry can patch Node's built-ins
+// (http, pg, etc.) before they are imported by app.js and its dependencies.
+require('./instrument');
+
 require('dotenv').config();
 const app = require('./src/app');
 const migrateAll = require('./src/scripts/migrate-all');
