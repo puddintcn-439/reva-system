@@ -63,6 +63,20 @@ Toàn bộ env vars đặt trong **một Vercel project duy nhất** (Production
 
 ---
 
+## Env vars fallback DB (khi không dùng DATABASE_URL)
+
+Chỉ dùng khi chạy local và không có `DATABASE_URL`. Trên production (Vercel/Supabase) luôn dùng `DATABASE_URL`.
+
+| Var | Mặc định | Mô tả |
+|-----|----------|-------|
+| `DB_HOST` | `localhost` | PostgreSQL host |
+| `DB_PORT` | `5432` | PostgreSQL port |
+| `DB_NAME` | `hun_consignment` | Tên database |
+| `DB_USER` | `postgres` | Database user |
+| `DB_PASSWORD` | _(trống)_ | Database password |
+
+---
+
 ## Lưu ý bảo mật
 
 - **Không commit** bất kỳ giá trị secret nào vào repo. Dùng Vercel / Docker secrets.

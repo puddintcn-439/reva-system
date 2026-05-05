@@ -1,7 +1,7 @@
 const db = require('../config/database');
 const { validationResult } = require('express-validator');
 const { sendTemplateEmail } = require('../config/email');
-
+const logger = require('../config/logger');
 const sysSettings = require('../config/systemSettings');
 
 // Format helpers reused across functions
@@ -26,7 +26,7 @@ async function _sendSettlementEmail(settlement, consignorEmail, consignorName, i
       lookup_url:       lookupUrl,
     });
   } catch (err) {
-    console.error('[EMAIL] settlement_created trigger error:', err.message);
+    logger.error({ err }, '[EMAIL] settlement_created trigger error');
   }
 }
 
@@ -181,7 +181,7 @@ const createSettlement = async (req, res, next) => {
         _sendSettlementEmail(saved, coRow.rows[0].email, coRow.rows[0].full_name, products.rows.length);
       }
     } catch (mailErr) {
-      console.error('[EMAIL] settlement_created lookup error:', mailErr.message);
+      logger.error({ err: mailErr }, '[EMAIL] settlement_created lookup error');
     }
   } catch (err) {
     await client.query('ROLLBACK');
@@ -284,7 +284,7 @@ const bulkCreateSettlements = async (req, res, next) => {
           _sendSettlementEmail(settlement, coRow.rows[0].email, coRow.rows[0].full_name, itemCount);
         }
       } catch (mailErr) {
-        console.error('[EMAIL] bulk settlement_created email error:', mailErr.message);
+        logger.error({ err: mailErr }, '[EMAIL] bulk settlement_created email error');
       }
     }
   } catch (err) {
