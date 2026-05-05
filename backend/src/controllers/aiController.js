@@ -60,7 +60,7 @@ const suggestProduct = async (req, res, next) => {
     const safeCategory = category_name ? category_name.replace(/["`\\]/g, ' ').trim().slice(0, 100) : 'chưa phân loại';
 
     const genAI = getClient();
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-live' });
 
     const prompt = `Bạn là chuyên gia định giá đồ secondhand tại Việt Nam.
 
@@ -121,7 +121,7 @@ const analyzeDashboard = async (req, res, next) => {
     const period = Number(period_months) || 1;
 
     const genAI = getClient();
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-live' });
 
     const prompt = `Bạn là chuyên gia phân tích kinh doanh cho cửa hàng secondhand REVA tại Việt Nam.
 
