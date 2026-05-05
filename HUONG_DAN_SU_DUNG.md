@@ -132,8 +132,8 @@ Truy cập: `/admin/login`
 
 **Lưu ý bảo mật:**
 - Tối đa **10 lần đăng nhập sai trong 15 phút** — sau đó tạm khóa IP
-- Token đăng nhập lưu trong trình duyệt — đóng tab không tự đăng xuất
-- Để đăng xuất hoàn toàn: nhấn nút **Đăng xuất** trên thanh điều hướng
+- Hệ thống dùng **access token (1 giờ) + refresh token (30 ngày)** lưu trong trình duyệt — token tự động làm mới khi gần hết hạn
+- Đóng tab không tự đăng xuất — phải nhấn **Đăng xuất** để thu hồi token hoàn toàn
 
 **Sau khi đăng nhập**, hệ thống tự chuyển đến trang phù hợp nhất với quyền của bạn:
 - Có `dashboard:view` → Tổng quan

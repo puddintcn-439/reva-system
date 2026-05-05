@@ -1,15 +1,279 @@
 # REVA - Thanh Lý Ký Gửi
 
-Website — Chuỗi cửa hàng ký gửi thời trang bền vững tại Hà Nội.
+Website & hệ thống quản lý chuỗi cửa hàng ký gửi thời trang bền vững tại Hà Nội.
 
 ## Tech Stack
 
-| Layer    | Technology |
-|----------|-----------|
-| Frontend | React 18 + Vite + TailwindCSS + React Router v6 |
-| Backend  | Node.js + Express.js + JWT Auth |
-| Database | PostgreSQL 16 |
-| Deploy   | Docker + Docker Compose |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + Vite + TailwindCSS + React Router v6 + @tanstack/react-query v5 |
+| Backend | Node.js + Express 4 + JWT (access 1h + refresh 30d rotating) |
+| Database | PostgreSQL 16 (Supabase) |
+| Storage | Supabase Storage (ảnh sản phẩm) |
+| Logging | pino v9 + pino-http (JSON prod / pretty dev) |
+| Error Tracking | Sentry (@sentry/node + @sentry/react) |
+| Deploy | Vercel (monorepo — frontend + backend cùng domain) |
+| Testing | Jest + Supertest (backend, 59 files / 359 tests) + Vitest + Testing Library (frontend) |
+
+---
+
+## Tính năng
+
+### Dành cho khách hàng (Public)
+| Trang | Mô tả |
+|-------|-------|
+| `/` | Trang chủ – giới thiệu dịch vụ, bảng phí |
+| `/about` | Về REVA – lịch sử, 3 cơ sở |
+| `/consign` | Ký gửi – đăng ký ký gửi trực tiếp/online |
+| `/buy` | Thu mua – đăng ký thu mua |
+| `/contact` | Tìm cửa hàng – địa chỉ, hotline, giờ mở cửa |
+| `/sales` | Tra cứu quyết toán bằng mã khách hàng / SĐT |
+
+### Dành cho quản trị (`/admin`)
+| Trang | Chức năng |
+|-------|-----------|
+| Dashboard | Thống kê KPI + biểu đồ doanh thu + top khách |
+| POS | Bán hàng quét mã/tìm kiếm, đa đơn, QR thanh toán, in biên lai |
+| Lịch sử bán hàng | Xem + xác nhận + hoàn trả đơn hàng |
+| Khách hàng mua | Danh sách + lịch sử giao dịch theo khách mua |
+| Sản phẩm | CRUD sản phẩm, bulk import CSV, in nhãn mã vạch |
+| Khách ký gửi | Quản lý consignors, thông tin ngân hàng, lịch sử |
+| Yêu cầu ký gửi | Xét duyệt + email tự động |
+| Thu mua | Quản lý yêu cầu thu mua |
+| Quyết toán | Tạo / quyết toán hàng loạt, QR chuyển khoản |
+| Cài đặt | Thông báo, chi nhánh, ngân hàng, hoa hồng, SMTP, CORS |
+| Quản lý tài khoản | RBAC 8 vai trò, tạo/sửa/xóa user |
+
+---
+
+## Phân quyền (RBAC)
+
+8 vai trò: `superadmin`, `admin`, `manager`, `staff`, `cashier`, `accountant`, `inventory`, `viewer`.  
+Quyền lưu trong bảng `role_permissions` — có thể điều chỉnh trong DB. Chi tiết xem [HUONG_DAN_SU_DUNG.md](HUONG_DAN_SU_DUNG.md#4-phân-quyền-người-dùng).
+
+---
+
+## Cấu trúc phí ký gửi (mặc định — có thể cấu hình trong Admin)
+
+| Giá bán | REVA nhận |
+|---------|-----------|
+| Dưới 60k | 20.000đ / sản phẩm |
+| 60k – 130k | 30.000đ / sản phẩm |
+| Trên 130k | 25% |
+| Không bán được | Không mất phí |
+
+---
+
+## Hướng dẫn chạy dự án
+
+### Yêu cầu
+- Node.js >= 18
+- PostgreSQL >= 14 (local) **hoặc** Supabase account (production)
+
+---
+
+### Cách 1: Chạy với Docker Compose (Local dev)
+
+```bash
+git clone https://github.com/puddintcn-439/reva-system.git
+cd reva-system
+docker-compose up -d
+```
+
+Truy cập:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5000
+- **Admin**: http://localhost:5173/admin/login
+
+---
+
+### Cách 2: Chạy thủ công (Development)
+
+#### 1. Tạo database
+
+```sql
+CREATE DATABASE hun_consignment;
+```
+
+#### 2. Chạy schema và seed
+
+```bash
+psql -U postgres -d hun_consignment -f database/schema.sql
+psql -U postgres -d hun_consignment -f database/seed.sql
+```
+
+#### 3. Cấu hình Backend
+
+```bash
+cd backend
+cp .env.example .env
+# Sửa: DATABASE_URL hoặc DB_*, JWT_SECRET (min 32 chars)
+npm install
+npm run dev
+```
+
+#### 4. Chạy Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+### Cách 3: Deploy lên Vercel (Production)
+
+Dự án dùng **monorepo** — một Vercel project phục vụ cả frontend và backend:
+
+```
+/ → frontend (Vite)
+/api → backend (Express)
+```
+
+1. Import repo lên Vercel
+2. Cấu hình Environment Variables (xem [DEPLOYMENT_ENV.md](DEPLOYMENT_ENV.md))
+3. Vercel tự build và deploy khi push lên `main`
+
+---
+
+## API Endpoints
+
+### Public
+```
+GET  /api/announcements                      Thông báo ticker
+GET  /api/locations                          Danh sách cơ sở
+GET  /api/products                           Danh sách sản phẩm
+GET  /api/products/categories                Danh mục
+GET  /api/settlements/lookup?code=HUN-XXXXX  Tra cứu quyết toán
+POST /api/consignments                       Gửi yêu cầu ký gửi
+POST /api/purchases                          Gửi yêu cầu thu mua
+```
+
+### Auth
+```
+POST /api/auth/login      Đăng nhập → access token (1h) + refresh token (30d)
+POST /api/auth/refresh    Làm mới access token bằng refresh token (rotating)
+POST /api/auth/logout     Thu hồi refresh token
+GET  /api/auth/me         Thông tin tài khoản hiện tại
+```
+
+### Admin (Bearer JWT Required)
+```
+# Products
+GET    /api/products
+POST   /api/products
+PUT    /api/products/:id
+DELETE /api/products/:id
+POST   /api/upload/image   Upload ảnh sản phẩm lên Supabase Storage
+
+# Consignors
+GET  /api/consignors
+GET  /api/consignors/:id
+
+# Consignments
+GET   /api/consignments
+PATCH /api/consignments/:id/status
+
+# Settlements
+GET   /api/settlements
+POST  /api/settlements
+PATCH /api/settlements/:id/pay
+
+# Purchases
+GET   /api/purchases
+PATCH /api/purchases/:id/status
+
+# POS
+POST /api/pos/sales          Tạo đơn hàng
+GET  /api/pos/sales          Lịch sử bán hàng
+POST /api/pos/refunds        Tạo hoàn trả
+
+# Banks
+GET  /api/banks
+POST /api/banks
+
+# System Settings
+GET  /api/system-settings
+PUT  /api/system-settings
+
+# Dashboard
+GET /api/consignors/stats    KPI tổng quan
+```
+
+Xem API docs đầy đủ tại `/api/docs` (Swagger UI).
+
+---
+
+## Testing
+
+```bash
+# Backend (Jest + Supertest)
+cd backend
+npm test              # chạy tất cả tests
+npm run test:ci       # với coverage report
+
+# Frontend (Vitest + Testing Library)
+cd frontend
+npm test              # chạy một lần
+npm run test:watch    # watch mode
+npm run test:coverage # với coverage report
+```
+
+---
+
+## Cấu trúc thư mục
+
+```
+reva-system/
+├── backend/
+│   ├── instrument.js              Sentry init (loaded first in server.js)
+│   ├── server.js                  Entry point
+│   ├── src/
+│   │   ├── app.js                 Express app — middleware, routes
+│   │   ├── config/
+│   │   │   ├── database.js        PostgreSQL pool (Supabase / local)
+│   │   │   ├── email.js           Nodemailer + template engine
+│   │   │   ├── logger.js          Pino logger
+│   │   │   ├── swagger.js         Swagger spec
+│   │   │   └── systemSettings.js  DB-backed config cache
+│   │   ├── controllers/           Business logic
+│   │   ├── middleware/
+│   │   │   ├── auth.js            JWT verify + RBAC
+│   │   │   ├── audit.js           Audit log middleware
+│   │   │   └── errorHandler.js    Central error handler
+│   │   ├── routes/                Express routers
+│   │   └── scripts/               DB migrations (migrate-all.js, seed.js)
+│   ├── Dockerfile
+│   └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── instrument.js          Sentry init (first import in main.jsx)
+│   │   ├── main.jsx               React entry point
+│   │   ├── App.jsx                Routes
+│   │   ├── components/Layout/     Navbar, Footer, Ticker, AdminLayout
+│   │   ├── context/AuthContext    JWT + refresh token auth state
+│   │   ├── pages/                 Public pages (Home, About, Consign, Buy, Contact, Sales)
+│   │   ├── pages/Admin/           Dashboard, POS, Products, Consignments, etc.
+│   │   ├── services/api.js        Axios client + token refresh interceptor
+│   │   ├── utils/                 format.js, receipt.js, escpos.js
+│   │   └── __tests__/             Vitest test files
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+├── database/
+│   ├── schema.sql                 Tất cả bảng, index, trigger, RLS
+│   └── seed.sql                   Dữ liệu mẫu
+├── vercel.json                    Monorepo config (experimentalServices)
+├── DEPLOYMENT_ENV.md              Hướng dẫn env vars
+├── HUONG_DAN_SU_DUNG.md          Hướng dẫn vận hành
+└── docker-compose.yml
+```
+
+---
+
+© 2026 REVA Thanh Lý Ký Gửi · Hà Nội
+
 
 ---
 
