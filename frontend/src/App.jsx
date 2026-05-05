@@ -29,6 +29,7 @@ const SalesHistory  = lazy(() => import('./pages/Admin/SalesHistory'))
 const Users         = lazy(() => import('./pages/Admin/Users'))
 const Customers     = lazy(() => import('./pages/Admin/Customers'))
 const UserGuide     = lazy(() => import('./pages/Admin/UserGuide'))
+const Inbox         = lazy(() => import('./pages/Admin/Inbox'))
 
 function PageLoader() {
   return <div className="min-h-screen flex items-center justify-center bg-hun-cream text-hun-brown text-sm tracking-widest">Đang tải...</div>
@@ -92,6 +93,7 @@ export default function App() {
                 <Route path="purchases"    element={<PermissionRoute permission="purchases:view"><Purchases /></PermissionRoute>} />
                 <Route path="settings"     element={<PermissionRoute permission="settings:manage"><Settings /></PermissionRoute>} />
                 <Route path="users"        element={<PermissionRoute permission="users:manage"><Users /></PermissionRoute>} />
+                <Route path="inbox"        element={<PermissionRoute permission="inbox:view"><Inbox /></PermissionRoute>} />
                 <Route path="guide"        element={<UserGuide />} />
               </Route>
             </Routes>

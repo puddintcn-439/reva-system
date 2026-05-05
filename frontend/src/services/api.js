@@ -184,4 +184,14 @@ export const exportInventoryReport = (params) =>
 export const suggestProduct    = (data) => api.post('/ai/suggest-product', data)
 export const analyzeDashboard  = (data) => api.post('/ai/analyze-dashboard', data)
 
+// Inbox — internal team chat
+export const getInboxThreads      = ()         => api.get('/inbox/threads')
+export const createInboxThread    = (data)     => api.post('/inbox/threads', data)
+export const closeInboxThread     = (id)       => api.patch(`/inbox/threads/${id}/close`)
+export const reopenInboxThread    = (id)       => api.patch(`/inbox/threads/${id}/reopen`)
+export const deleteInboxThread    = (id)       => api.delete(`/inbox/threads/${id}`)
+export const getInboxMessages     = (id, after) => api.get(`/inbox/threads/${id}/messages`, { params: after ? { after } : {} })
+export const postInboxMessage     = (id, body) => api.post(`/inbox/threads/${id}/messages`, { body })
+export const deleteInboxMessage   = (id)       => api.delete(`/inbox/messages/${id}`)
+
 export default api

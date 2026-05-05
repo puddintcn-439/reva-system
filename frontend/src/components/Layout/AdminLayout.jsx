@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ClipboardList, Receipt,
-  Users, ShoppingBag, Settings, LogOut, Menu, X, ScanBarcode, History, UserCog, UserCheck, BookOpen,
+  Users, ShoppingBag, Settings, LogOut, Menu, X, ScanBarcode, History, UserCog, UserCheck, BookOpen, MessageSquare,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
@@ -18,6 +18,7 @@ const NAV = [
   { to: '/admin/purchases',     icon: ShoppingBag,     label: 'Thu mua',             permission: 'purchases:view' },
   { to: '/admin/settlements',   icon: Receipt,         label: 'Quyết toán',          permission: 'settlements:view' },
   { to: '/admin/settings',      icon: Settings,        label: 'Cài đặt',             permission: 'settings:manage' },
+  { to: '/admin/inbox',         icon: MessageSquare,   label: 'Hộp thư nội bộ',      permission: 'inbox:view' },
   { to: '/admin/guide',         icon: BookOpen,        label: 'Hướng dẫn sử dụng',  permission: undefined },
 ]
 

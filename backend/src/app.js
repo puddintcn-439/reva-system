@@ -23,6 +23,7 @@ const systemSettingsRoutes = require('./routes/systemSettings');
 const uploadRoutes = require('./routes/upload');
 const reportRoutes = require('./routes/reports');
 const aiRoutes     = require('./routes/ai');
+const inboxRoutes  = require('./routes/inbox');
 const { errorHandler } = require('./middleware/errorHandler');
 const sysSettings = require('./config/systemSettings');
 
@@ -150,6 +151,7 @@ app.use('/system-settings', systemSettingsRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/reports', reportRoutes);
 app.use('/ai',      aiRoutes);
+app.use('/inbox',   inboxRoutes);
 
 // Health check — UptimeRobot monitors this endpoint
 app.get('/health', async (req, res) => {

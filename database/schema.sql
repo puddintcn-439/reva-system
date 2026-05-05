@@ -352,6 +352,28 @@ CREATE TABLE IF NOT EXISTS purchase_requests (
 );
 
 -- ----------------------------------------------------------------
+-- INBOX (internal team chat)
+-- ----------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS inbox_threads (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title       VARCHAR(200) NOT NULL,
+  created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+  status      VARCHAR(10) NOT NULL DEFAULT 'open'
+              CHECK (status IN ('open', 'closed')),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS inbox_messages (
+  id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  thread_id   UUID NOT NULL REFERENCES inbox_threads(id) ON DELETE CASCADE,
+  sender_id   UUID REFERENCES users(id) ON DELETE SET NULL,
+  body        TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_inbox_messages_thread ON inbox_messages(thread_id, created_at);
+
+-- ----------------------------------------------------------------
 -- UPDATED_AT trigger
 -- ----------------------------------------------------------------
 CREATE OR REPLACE FUNCTION trigger_set_updated_at()
@@ -368,7 +390,7 @@ BEGIN
   FOREACH t IN ARRAY ARRAY[
     'users','locations','announcements','consignors',
     'consignment_requests','products','settlements',
-    'purchase_requests','bank_accounts','email_templates','customers'
+    'purchase_requests','bank_accounts','email_templates','customers','inbox_threads'
   ]
   LOOP
     EXECUTE format('

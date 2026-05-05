@@ -35,6 +35,8 @@ const ALL_PERMISSIONS = [
   'settings:system',    // system-level config: SMTP, CORS, JWT — superadmin only
   'users:manage',
   'reports:view',
+  'inbox:view',
+  'inbox:manage',
 ];
 
 const ROLE_PERMISSIONS = {
@@ -49,6 +51,7 @@ const ROLE_PERMISSIONS = {
     'settlements:view',
     'purchases:view', 'purchases:manage',
     'reports:view',
+    'inbox:view', 'inbox:manage',
   ],
   staff: [
     'dashboard:view',
@@ -57,20 +60,24 @@ const ROLE_PERMISSIONS = {
     'products:view', 'products:manage',
     'consignors:view', 'consignors:manage',
     'purchases:view', 'purchases:manage',
+    'inbox:view',
   ],
   cashier: [
     'pos:sale', 'pos:history',
     'products:view',
+    'inbox:view',
   ],
   accountant: [
     'dashboard:view',
     'pos:history',
     'settlements:view', 'settlements:manage',
     'reports:view',
+    'inbox:view',
   ],
   inventory: [
     'products:view', 'products:manage',
     'settings:manage',   // locations/categories only — enforced by business logic
+    'inbox:view',
   ],
   viewer: [
     'dashboard:view',
@@ -78,6 +85,7 @@ const ROLE_PERMISSIONS = {
     'products:view',
     'settlements:view',
     'reports:view',
+    'inbox:view',
   ],
 };
 
