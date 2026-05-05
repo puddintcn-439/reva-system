@@ -20,6 +20,27 @@ function parseJsonResponse(text) {
   return JSON.parse(clean);
 }
 
+/** Map Gemini API errors to friendly HTTP responses */
+function handleGeminiError(err, res) {
+  const msg = err.message || '';
+  if (msg.includes('429') || msg.includes('Too Many Requests') || msg.includes('quota')) {
+    // Extract retry-after if present
+    const retryMatch = msg.match(/retry in (\d+)/i);
+    const retryAfter = retryMatch ? `${retryMatch[1]} giây` : 'vài phút';
+    return res.status(429).json({
+      success: false,
+      message: `AI đang bận, vui lòng thử lại sau ${retryAfter}`,
+    });
+  }
+  if (msg.includes('403') || msg.includes('API_KEY') || msg.includes('permission')) {
+    return res.status(503).json({
+      success: false,
+      message: 'AI service chưa được cấu hình đúng, vui lòng liên hệ admin',
+    });
+  }
+  return null; // not a known Gemini error, propagate to next()
+}
+
 // ── suggestProduct ────────────────────────────────────────────────────────────
 
 /**
@@ -74,7 +95,8 @@ Hãy trả về JSON thuần (KHÔNG có markdown, KHÔNG có code fence):
     logger.info({ userId: req.user?.id, name }, 'AI product suggestion generated');
     res.json({ success: true, data: { suggested_price: suggestedPrice, description } });
   } catch (err) {
-    next(err);
+    const handled = handleGeminiError(err, res);
+    if (!handled) next(err);
   }
 };
 
@@ -118,7 +140,8 @@ Hãy viết 3-4 câu nhận xét ngắn gọn: điểm tốt, điểm cần chú
     logger.info({ userId: req.user?.id, period }, 'AI dashboard analysis generated');
     res.json({ success: true, data: { summary } });
   } catch (err) {
-    next(err);
+    const handled = handleGeminiError(err, res);
+    if (!handled) next(err);
   }
 };
 
