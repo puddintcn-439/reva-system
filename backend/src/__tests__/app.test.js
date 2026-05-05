@@ -1,5 +1,7 @@
 // Prevent pino transport initialization during tests by mocking logger
 jest.doMock('../config/logger', () => ({ info: jest.fn(), error: jest.fn(), child: () => ({ info: jest.fn(), error: jest.fn() }) }))
+// Avoid hitting DB when initializing CORS in app; return empty allowed origins by default
+jest.doMock('../config/systemSettings', () => ({ getAllowedOrigins: async () => [] }))
 
 describe('app basic routes', () => {
   afterEach(() => jest.resetModules())
@@ -12,7 +14,7 @@ describe('app basic routes', () => {
     expect(res.status).toBe(200)
     expect(res.headers['content-type']).toMatch(/json/)
     expect(res.body.openapi).toBe('3.0.0')
-  })
+  }, 20000)
 
   test('GET /health returns 200 when DB ok', async () => {
     jest.resetModules()

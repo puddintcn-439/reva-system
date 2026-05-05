@@ -203,4 +203,64 @@ describe('settlementController', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
+  test('createSettlement validation, no-products and success flows', async () => {
+    // validation error path (getClient still called)
+    const mockClient1 = { query: jest.fn().mockResolvedValue({}), release: jest.fn() };
+    jest.doMock('../../config/database', () => ({ getClient: async () => mockClient1 }));
+    jest.doMock('express-validator', () => ({ validationResult: () => ({ isEmpty: () => false, array: () => [{ msg: 'err' }] }) }));
+    let mod = require('../settlementController');
+    let req = { body: {} };
+    let res = makeRes(); let next = jest.fn();
+    await mod.createSettlement(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(400);
+
+    // no products -> rollback + 400
+    jest.resetModules();
+    const mockClient2 = {
+      query: jest.fn()
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({}),
+      release: jest.fn(),
+    };
+    jest.doMock('../../config/database', () => ({ getClient: async () => mockClient2 }));
+    jest.doMock('express-validator', () => ({ validationResult: () => ({ isEmpty: () => true }) }));
+    mod = require('../settlementController');
+    req = { body: { consignor_id: 1, period_start: '2020-01-01', period_end: '2020-01-02' } };
+    res = makeRes(); next = jest.fn();
+    await mod.createSettlement(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(mockClient2.release).toHaveBeenCalled();
+
+    // success path: commit and fire email lookup
+    jest.resetModules();
+    const products = [{ id: 1, name: 'P', sale_price: 100, commission_amount: 10, consignor_amount: 90, code: 'C' }];
+    const mockClient3 = {
+      query: jest.fn()
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({ rows: products })
+        .mockResolvedValueOnce({ rows: [{ id: 99, code: 'QT-1', total_payout: 90 }] })
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({}),
+      release: jest.fn(),
+    };
+    jest.doMock('../../config/database', () => ({
+      getClient: async () => mockClient3,
+      query: async (sql) => {
+        if (/SELECT full_name, email FROM consignors/.test(sql)) return { rows: [{ full_name: 'X', email: 'a@x' }] };
+        return { rows: [] };
+      },
+    }));
+    jest.doMock('express-validator', () => ({ validationResult: () => ({ isEmpty: () => true }) }));
+    jest.doMock('../../config/systemSettings', () => ({ getSmtpConfig: async () => ({}) }));
+    const sendMock = jest.fn();
+    jest.doMock('../../config/email', () => ({ sendTemplateEmail: sendMock }));
+    mod = require('../settlementController');
+    req = { body: { consignor_id: 1, period_start: '2020-01-01', period_end: '2020-01-02' } };
+    res = makeRes(); next = jest.fn();
+    await mod.createSettlement(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(mockClient3.release).toHaveBeenCalled();
+  });
+
 });
