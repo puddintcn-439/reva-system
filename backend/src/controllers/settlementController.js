@@ -65,7 +65,37 @@ const lookupSettlement = async (req, res, next) => {
       return { ...s, items: items.rows };
     }));
 
-    res.json({ success: true, data: settlements });
+    // Fetch current consignment status for this consignor
+    const consignorId = result.rows[0]?.consignor_id;
+    let consignment_summary = null;
+    if (consignorId) {
+      const [statusRes, activeRes, pendingPayoutRes] = await Promise.all([
+        db.query(
+          `SELECT status, COUNT(*) AS count FROM products WHERE consignor_id = $1 GROUP BY status`,
+          [consignorId]
+        ),
+        db.query(
+          `SELECT id, name, code, sale_price, consignor_amount, status, consign_start, consign_end, condition_percent
+           FROM products WHERE consignor_id = $1 AND status IN ('active', 'pending')
+           ORDER BY consign_end ASC NULLS LAST, created_at DESC`,
+          [consignorId]
+        ),
+        db.query(
+          `SELECT id, name, code, sale_price, consignor_amount, sold_at
+           FROM products WHERE consignor_id = $1 AND status = 'sold'
+             AND id NOT IN (SELECT product_id FROM settlement_items WHERE product_id IS NOT NULL)
+           ORDER BY sold_at DESC`,
+          [consignorId]
+        ),
+      ]);
+      consignment_summary = {
+        by_status: statusRes.rows,
+        active_products: activeRes.rows,
+        pending_payout: pendingPayoutRes.rows,
+      };
+    }
+
+    res.json({ success: true, data: settlements, consignment_summary });
   } catch (err) {
     next(err);
   }

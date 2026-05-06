@@ -274,7 +274,7 @@ export default function Dashboard() {
               <p className="font-serif text-3xl font-bold text-amber-400">{fmt(data.products.total_commission)}</p>
             </div>
             <div className="sm:border-l sm:border-gray-700 sm:pl-6">
-              <p className="text-xs text-gray-400 mb-1">Trả khách hàng</p>
+              <p className="text-xs text-gray-400 mb-1">Trả khách ký gửi</p>
               <p className="font-serif text-3xl font-bold text-gray-300">{fmt(data.products.total_payout_all)}</p>
             </div>
           </div>

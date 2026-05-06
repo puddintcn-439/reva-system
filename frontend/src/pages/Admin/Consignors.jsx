@@ -50,7 +50,7 @@ export default function Consignors() {
 
   return (
     <div>
-      <div className="mb-6"><h1 className="text-2xl font-semibold">Khách hàng</h1></div>
+      <div className="mb-6"><h1 className="text-2xl font-semibold">Khách hàng ký gửi</h1></div>
 
       <div className="bg-white border rounded-lg p-4 mb-6">
         <input

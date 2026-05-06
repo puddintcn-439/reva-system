@@ -117,7 +117,7 @@ export default function Settlements() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b">
               <tr>
-                {['Mã QT', 'Khách hàng', 'Kỳ thanh toán', 'Tổng bán', 'Phí REVA', 'Khách nhận', 'Trạng thái', 'Ngày tạo', ''].map((h) => (
+                {['Mã QT', 'Khách hàng ký gửi', 'Kỳ thanh toán', 'Tổng bán', 'Phí REVA', 'Khách nhận', 'Trạng thái', 'Ngày tạo', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">{h}</th>
                 ))}
               </tr>
@@ -205,7 +205,7 @@ export default function Settlements() {
                 </div>
               </div>
               <div className="p-3 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700">
-                Hệ thống sẽ tự động tạo quyết toán cho <strong>tất cả khách hàng</strong> có sản phẩm đã bán trong kỳ này chưa được quyết toán. Khách có số tiền = 0 sẽ bỏ qua.
+                Hệ thống sẽ tự động tạo quyết toán cho <strong>tất cả khách hàng ký gửi</strong> có sản phẩm đã bán trong kỳ này chưa được quyết toán. Khách có số tiền = 0 sẽ bỏ qua.
               </div>
               <div className="flex justify-end gap-3">
                 <button type="button" onClick={() => setBulkModal(false)} className="btn-outline text-sm">Hủy</button>
@@ -228,9 +228,9 @@ export default function Settlements() {
             </div>
             <form onSubmit={handleCreate} className="p-6 space-y-4">
               <div>
-                <label className="form-label">Khách hàng *</label>
+                <label className="form-label">Khách hàng ký gửi *</label>
                 <select name="consignor_id" required className="form-input">
-                  <option value="">-- Chọn khách hàng --</option>
+                  <option value="">-- Chọn khách hàng ký gửi --</option>
                   {consignors.map((c) => <option key={c.id} value={c.id}>{c.full_name} ({c.phone})</option>)}
                 </select>
               </div>

@@ -415,7 +415,7 @@ function ExpiringTab() {
                   {allSelected ? <CheckSquare size={16} /> : <Square size={16} />}
                 </button>
               </th>
-              {['Sản phẩm', 'Khách hàng', 'Email', 'Giá bán', 'Hết hạn', 'Còn lại'].map((h) => (
+              {['Sản phẩm', 'Khách hàng ký gửi', 'Email', 'Giá bán', 'Hết hạn', 'Còn lại'].map((h) => (
                 <th key={h} className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">{h}</th>
               ))}
             </tr>

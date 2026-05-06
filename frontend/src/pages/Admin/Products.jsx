@@ -523,7 +523,7 @@ export default function Products() {
                 <div>
                   <label className="form-label">Khách hàng ký gửi</label>
                   <select name="consignor_id" defaultValue={modal.data.consignor_id || ''} className="form-input">
-                    <option value="">-- Chọn khách hàng --</option>
+                    <option value="">-- Chọn khách hàng ký gửi --</option>
                     {consignors.map((c) => <option key={c.id} value={c.id}>{c.full_name} ({c.phone})</option>)}
                   </select>
                 </div>
