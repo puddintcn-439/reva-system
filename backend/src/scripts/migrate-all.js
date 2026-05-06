@@ -16,6 +16,16 @@ async function migrateAll () {
   try {
     await client.query('BEGIN')
 
+    // ── schema_migrations tracking table ──────────────────────────────────
+    // Records which migration versions have been applied and when.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        version     VARCHAR(50) PRIMARY KEY,
+        description TEXT,
+        applied_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `)
+
     // ── Extension ──────────────────────────────────────────────────────────
     await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
 
@@ -88,6 +98,16 @@ async function migrateAll () {
     `)
 
     await client.query('COMMIT')
+
+    // Record current migration version outside the transaction (best-effort)
+    try {
+      const db2 = require('../config/database')
+      await db2.query(
+        `INSERT INTO schema_migrations (version, description) VALUES ($1, $2) ON CONFLICT (version) DO NOTHING`,
+        ['20260506_001', 'migrate-all: full idempotent schema consolidation']
+      )
+    } catch { /* non-fatal */ }
+
     console.log('✅ migrate-all: hoàn thành')
   } catch (err) {
     await client.query('ROLLBACK')

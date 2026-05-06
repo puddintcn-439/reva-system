@@ -53,6 +53,42 @@ Toàn bộ env vars đặt trong **một Vercel project duy nhất** (Production
 
 ---
 
+## Monitoring — Uptime (M6)
+
+Sử dụng **UptimeRobot** (free tier hỗ trợ 50 monitors, 5-minute check interval):
+
+1. Đăng ký tại [uptimerobot.com](https://uptimerobot.com)
+2. **New Monitor** → Type: `HTTP(s)` → URL: `https://<your-domain>/api/health`
+3. Monitoring Interval: **5 minutes**
+4. Alert contacts: email hoặc Slack webhook
+5. Kiểm tra response code **200** và keyword `"status":"ok"` (trong response body)
+
+Endpoint health check: `GET /api/health` — trả về `{ status: "ok", db: "connected" }` (503 nếu DB down).
+
+> Ngoài ra có thể dùng **Better Uptime**, **Freshping**, hoặc **Vercel Status** (tự động cho Vercel projects).
+
+---
+
+## Monitoring — Sentry Alert Rules (M7)
+
+Sau khi tích hợp `SENTRY_DSN` và `VITE_SENTRY_DSN`, cấu hình alert rules trong Sentry:
+
+**Recommended alerts (Sentry → Project → Alerts → Create Alert Rule):**
+
+| Alert | Condition | Threshold |
+|-------|-----------|-----------|
+| High error rate | `Number of events > N in 1h` | N = 50 |
+| New issue | First time an issue is seen | Immediately |
+| Regression | Resolved issue re-appears | Immediately |
+| Performance degradation (backend) | `p95 latency > 2000ms` | 2s |
+
+**Steps:**
+1. Sentry → chọn project (VD: `reva-backend`) → **Alerts** → **Create Alert Rule**
+2. Chọn **Issue Alert** → điều kiện: `A new issue is created` → Action: send email/Slack
+3. Tạo thêm **Metric Alert** cho error rate nếu dùng Sentry Performance
+
+---
+
 ## Checklist nhanh khi tạo Vercel project mới
 
 - [ ] `DATABASE_URL` — Transaction pooler Supabase, port 6543
@@ -64,6 +100,8 @@ Toàn bộ env vars đặt trong **một Vercel project duy nhất** (Production
 - [ ] `VITE_SENTRY_DSN` — project `javascript`
 - [ ] `GEMINI_API_KEY` — lấy tại aistudio.google.com/apikey (tùy chọn, bật tính năng AI)
 - [ ] SMTP_* (nếu muốn email hoạt động ngay, không set trong Admin UI)
+- [ ] UptimeRobot monitor → `GET /api/health` (xem section Uptime bên trên)
+- [ ] Sentry alert rules: new issue + regression + error rate (xem section Sentry bên trên)
 
 ---
 
