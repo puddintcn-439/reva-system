@@ -13,7 +13,7 @@ const NAV = [
   { to: '/admin/sales-history', icon: History,         label: 'Lịch sử bán hàng',  permission: 'pos:history' },
   { to: '/admin/customers',     icon: UserCheck,       label: 'Khách hàng mua',     permission: 'pos:history' },
   { to: '/admin/products',      icon: Package,         label: 'Sản phẩm',           permission: 'products:view' },
-  { to: '/admin/consignors',    icon: Users,           label: 'Khách hàng',         permission: 'consignors:view' },
+  { to: '/admin/consignors',    icon: Users,           label: 'Khách hàng ký gửi',  permission: 'consignors:view' },
   { to: '/admin/consignments',  icon: ClipboardList,   label: 'Yêu cầu ký gửi',     permission: 'consignments:view' },
   { to: '/admin/purchases',     icon: ShoppingBag,     label: 'Thu mua',             permission: 'purchases:view' },
   { to: '/admin/settlements',   icon: Receipt,         label: 'Quyết toán',          permission: 'settlements:view' },

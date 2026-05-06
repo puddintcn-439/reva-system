@@ -1099,7 +1099,7 @@ export default function POS() {
                 <img
                   src={`https://img.vietqr.io/image/${activeBank.bank_id}-${activeBank.account_no}-compact2.png?amount=${pendingPaySale.final_amount}&addInfo=HD${pendingPaySale.invoice_code}`}
                   alt="QR"
-                  className="w-36 h-36 object-contain"
+                  className="w-48 h-48 object-contain"
                 />
                 <p className="text-xs text-gray-500">{activeBank.bank_name} · {activeBank.account_no}</p>
               </div>
