@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -33,6 +33,17 @@ const Inbox         = lazy(() => import('./pages/Admin/Inbox'))
 
 function PageLoader() {
   return <div className="min-h-screen flex items-center justify-center bg-hun-cream text-hun-brown text-sm tracking-widest">Đang tải...</div>
+}
+
+function NotFound() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-hun-cream text-center px-4">
+      <p className="text-xs uppercase tracking-widest text-gray-400 mb-4">404</p>
+      <h1 className="text-2xl font-semibold text-hun-brown mb-2">Trang không tồn tại</h1>
+      <p className="text-sm text-gray-500 mb-8">Trang bạn tìm kiếm không tồn tại hoặc đã bị di chuyển.</p>
+      <Link to="/" className="btn-primary">Về trang chủ</Link>
+    </div>
+  )
 }
 
 function PrivateRoute({ children }) {
@@ -96,6 +107,9 @@ export default function App() {
                 <Route path="inbox"        element={<PermissionRoute permission="inbox:view"><Inbox /></PermissionRoute>} />
                 <Route path="guide"        element={<UserGuide />} />
               </Route>
+
+              {/* 404 — must be last */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
         </BrowserRouter>

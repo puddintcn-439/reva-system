@@ -1,8 +1,18 @@
 const router = require('express').Router();
 const { body } = require('express-validator');
+const rateLimit = require('express-rate-limit');
 const { login, getMe, changePassword, getUsers, createUser, updateUser, deleteUser, refresh, logout } = require('../controllers/authController');
 const { authenticate, requirePermission } = require('../middleware/auth');
 const { audit } = require('../middleware/audit');
+
+// Brute-force protection — 10 attempts per 15 minutes per IP
+const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Quá nhiều lần thử, vui lòng thử lại sau 15 phút' },
+});
 
 /**
  * @swagger
@@ -37,7 +47,7 @@ const { audit } = require('../middleware/audit');
  *       401:
  *         description: Sai tên đăng nhập hoặc mật khẩu
  */
-router.post('/login', [
+router.post('/login', authRateLimit, [
   body('username').trim().notEmpty().withMessage('Tên đăng nhập là bắt buộc'),
   body('password').notEmpty().withMessage('Mật khẩu là bắt buộc'),
 ], login);
@@ -97,7 +107,7 @@ router.put('/users/:id', authenticate, requirePermission('users:manage'), audit(
 router.delete('/users/:id', authenticate, requirePermission('users:manage'), audit('delete','user'), deleteUser);
 
 // ── Refresh + Logout (public — validated by refresh token) ────
-router.post('/refresh', refresh);
+router.post('/refresh', authRateLimit, refresh);
 router.post('/logout', logout);
 
 module.exports = router;

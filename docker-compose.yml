@@ -15,7 +15,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
-      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+      # seed.sql is intentionally NOT mounted here — run manually in dev/staging only:
+      # docker exec -i hun_db psql -U postgres hun_consignment < database/seed.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
