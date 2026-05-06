@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDashboardStats, getDashboardReports, exportFinancialReport, analyzeDashboard } from '../../services/api'
 import { Package, Users, Receipt, ClipboardList, TrendingUp, Award, BarChart2, FileDown, Sparkles, X } from 'lucide-react'
