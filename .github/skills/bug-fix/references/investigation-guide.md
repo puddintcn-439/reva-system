@@ -206,3 +206,50 @@ grep -r "console.error\|throw new\|next(err)" backend/src/controllers/
 # Kiểm tra DB schema cho table cụ thể
 grep -A 30 "CREATE TABLE IF NOT EXISTS tableName" database/schema.sql
 ```
+
+---
+
+## 9. Build Verification Checklist
+
+Sau mỗi bug fix, chạy theo thứ tự trước khi commit:
+
+| Bước | Lệnh | Điều kiện PASS |
+|------|------|----------------|
+| Lint / errors | `get_errors` (IDE) | Không có error mới |
+| Backend tests | `cd backend && npm test` | All tests PASS |
+| Frontend tests | `cd frontend && npm test` | All tests PASS |
+| **Frontend build** | `cd frontend && npm run build` | **Build hoàn thành, không có error** |
+| Backend sanity | `cd backend && node -e "require('./src/app')"` | Process exit code 0 |
+| Coverage | `cd backend && npm run test:coverage` | Không giảm dưới threshold |
+
+### Tại sao cần build frontend?
+
+Vite dev server (`npm run dev`) bỏ qua nhiều lỗi mà build production sẽ catch:
+- Import path sai / file không tồn tại
+- Component export thiếu / sai tên
+- Circular dependency
+- Unused import gây tree-shaking fail
+- Syntax error trong JSX chỉ xuất hiện ở production mode
+
+### Lỗi build phổ biến và cách fix
+
+| Lỗi build | Nguyên nhân | Fix |
+|-----------|------------|-----|
+| `Cannot find module './Component'` | File bị rename hoặc path sai | Kiểm tra đường dẫn import |
+| `'X' is not exported from 'Y'` | Named export bị xóa/đổi tên | Sửa export hoặc import |
+| `Chunk size warning > 500kb` | Bundle quá lớn | Thêm lazy import nếu cần (không bắt buộc fix) |
+| `[vite]: Rollup failed to resolve import` | Import dùng alias chưa config | Kiểm tra `vite.config.js` alias |
+| `window is not defined` | Code dùng browser API trong SSR context | Guard bằng `typeof window !== 'undefined'` |
+
+### Lệnh build đầy đủ (chạy từ root project)
+
+```bash
+# Build frontend
+cd frontend && npm run build
+
+# Nếu build OK, kiểm tra output size
+ls dist/assets/ | sort -k5 -rh | head -10
+
+# Preview build (optional — kiểm tra runtime)
+npm run preview
+```

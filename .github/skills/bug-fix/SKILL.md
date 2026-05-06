@@ -79,12 +79,36 @@ Fix Plan:
 
 ---
 
-### Bước 4 — Thực hiện Fix
+### Bước 4 — Thực hiện Fix + Build Verification
 
-Thực hiện các thay đổi theo kế hoạch. Sau mỗi nhóm thay đổi:
-- Chạy test liên quan nếu có (`npm test` trong backend hoặc frontend)
-- Verify bằng `get_errors` để không có TypeScript/linting error mới
-- Nếu backend thay đổi logic quan trọng → chạy `npm test` và kiểm tra coverage không giảm
+Thực hiện các thay đổi theo kế hoạch, sau đó **bắt buộc** chạy toàn bộ các bước verify theo thứ tự:
+
+#### 4a. Lint / type check
+- Dùng `get_errors` để đảm bảo không có error TypeScript hoặc linting mới phát sinh
+
+#### 4b. Unit tests
+- **Backend:** `cd backend && npm test` — tất cả tests phải PASS
+- **Frontend:** `cd frontend && npm test` — tất cả tests phải PASS
+- Nếu fix thay đổi behavior → phải sửa/thêm test case liên quan trước
+
+#### 4c. Build production bundle
+- **Frontend build** (quan trọng — catch lỗi type/import mà dev server bỏ qua):
+  ```bash
+  cd frontend && npm run build
+  ```
+  Build phải hoàn thành **không có error**. Warning có thể chấp nhận, error thì phải fix.
+- **Backend** không có build step riêng (Node.js) nhưng nếu có thay đổi cấu trúc lớn, khởi động thử:
+  ```bash
+  cd backend && node -e "require('./src/app')"
+  ```
+
+#### 4d. Coverage check (nếu backend thay đổi)
+```bash
+cd backend && npm run test:coverage
+```
+Coverage không được giảm xuống dưới threshold hiện tại.
+
+**Chỉ tiến sang Bước 5 khi tất cả 4 bước trên đều xanh.**
 
 ---
 

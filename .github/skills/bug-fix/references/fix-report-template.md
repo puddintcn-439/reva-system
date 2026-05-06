@@ -68,10 +68,12 @@ Dùng template này để generate report sau mỗi bug fix. Điền vào các `
 ### 4. Verification
 
 **Test đã chạy:**
-- [ ] Unit tests (`npm test`) — [PASS / FAIL / SKIP]
+- [ ] Lint / type check (`get_errors`) — [PASS / FAIL]
+- [ ] Unit tests backend (`cd backend && npm test`) — [PASS / FAIL / SKIP]
+- [ ] Unit tests frontend (`cd frontend && npm test`) — [PASS / FAIL / SKIP]
+- [ ] **Frontend build** (`cd frontend && npm run build`) — [PASS / FAIL]
 - [ ] Coverage không giảm — [trước: X% → sau: Y%]
 - [ ] Manual test bước tái hiện — [OK / lỗi khác]
-- [ ] Không có lỗi TypeScript/Lint mới
 
 **Kết quả:**
 [Mô tả ngắn kết quả sau khi fix — lỗi đã biến mất, test pass, v.v.]
