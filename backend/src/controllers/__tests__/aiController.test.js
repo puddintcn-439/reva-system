@@ -226,3 +226,56 @@ describe('aiController.analyzeDashboard', () => {
     expect(next).toHaveBeenCalledWith(expect.any(Error));
   });
 });
+
+// ── getUsage ──────────────────────────────────────────────────────────────────
+
+describe('aiController.getUsage', () => {
+  beforeEach(() => {
+    jest.resetModules();
+  });
+
+  test('returns usage rows for given date query param', async () => {
+    jest.doMock('../../lib/aiUsage', () => ({
+      checkAndIncrementUsage: jest.fn().mockResolvedValue({ allowed: true }),
+      getUsageByDate: jest.fn().mockResolvedValue([
+        { user_id: 'u1', username: 'admin', endpoint: 'suggest-product', calls: 5 },
+      ]),
+    }));
+    const { getUsage } = require('../aiController');
+    const req = { query: { date: '2026-05-06' } };
+    const res = makeRes(); const next = makeNext();
+    await getUsage(req, res, next);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      success: true,
+      data: expect.arrayContaining([expect.objectContaining({ endpoint: 'suggest-product' })]),
+    }));
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  test('defaults to today when no date query param provided', async () => {
+    const mockGetUsageByDate = jest.fn().mockResolvedValue([]);
+    jest.doMock('../../lib/aiUsage', () => ({
+      checkAndIncrementUsage: jest.fn().mockResolvedValue({ allowed: true }),
+      getUsageByDate: mockGetUsageByDate,
+    }));
+    const { getUsage } = require('../aiController');
+    const req = { query: {} };
+    const res = makeRes(); const next = makeNext();
+    await getUsage(req, res, next);
+    const today = new Date().toISOString().slice(0, 10);
+    expect(mockGetUsageByDate).toHaveBeenCalledWith(today);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+  });
+
+  test('propagates error to next()', async () => {
+    jest.doMock('../../lib/aiUsage', () => ({
+      checkAndIncrementUsage: jest.fn().mockResolvedValue({ allowed: true }),
+      getUsageByDate: jest.fn().mockRejectedValue(new Error('DB error')),
+    }));
+    const { getUsage } = require('../aiController');
+    const req = { query: { date: '2026-05-06' } };
+    const res = makeRes(); const next = makeNext();
+    await getUsage(req, res, next);
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+  });
+});

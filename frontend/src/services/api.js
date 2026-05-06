@@ -173,6 +173,7 @@ export const saveSystemSettings = (data) => api.patch('/system-settings', data)
 export const testSmtp           = (to) => api.post('/system-settings/test-smtp', { to })
 export const getPublicSettings  = () => api.get('/system-settings/public')
 export const recalcCommissions   = (data) => api.post('/system-settings/recalculate-commissions', data)
+export const getAiUsage         = (date) => api.get('/system-settings/ai-usage', { params: { date } })
 
 // Reports — Excel export (returns blob)
 export const exportFinancialReport = (params) =>

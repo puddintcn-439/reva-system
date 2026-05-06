@@ -9,6 +9,7 @@ import {
   getBankAccounts, createBankAccount, updateBankAccount, setActiveBank, deleteBankAccount,
   changePassword, getSystemSettings, saveSystemSettings, testSmtp, getPublicSettings, recalcCommissions,
 } from '../../services/api'
+import { getAiUsage } from '../../services/api'
 import toast from 'react-hot-toast'
 import { Plus, Trash2, Edit2, Save, X, Send, CheckSquare, Square, Star, FlaskConical } from 'lucide-react'
 import { fmtMoney } from '../../utils/format'
@@ -851,6 +852,8 @@ function SystemSettingsTab() {
   const [form, setForm] = useState({})
   const [testEmail, setTestEmail] = useState('')
   const [initialized, setInitialized] = useState(false)
+  const [aiUsageDate, setAiUsageDate] = useState(new Date().toISOString().slice(0,10))
+  const [aiUsageRows, setAiUsageRows] = useState([])
 
   if (!isLoading && !initialized && rows.length) {
     setForm(toForm(rows))
@@ -985,6 +988,31 @@ function SystemSettingsTab() {
       >
         {saveMut.isPending ? 'Đang lưu...' : 'Lưu cài đặt hệ thống'}
       </button>
+
+      {/* AI usage viewer (admin) */}
+      <div className="bg-white border rounded-lg p-6 mt-6">
+        <h3 className="font-medium text-base mb-2">AI Usage (admin)</h3>
+        <div className="flex items-center gap-2 mb-3">
+          <input type="date" value={aiUsageDate} onChange={(e) => setAiUsageDate(e.target.value)} className="form-input" />
+          <button onClick={async () => { const res = await getAiUsage(aiUsageDate); setAiUsageRows(res.data.data) }} className="btn-outline">Tải</button>
+        </div>
+        <div className="text-sm text-gray-600">
+          {aiUsageRows.length === 0 ? <p className="text-xs text-gray-400">Chưa có dữ liệu cho ngày này</p> : (
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="text-xs text-gray-500">
+                  <th>User</th><th>Endpoint</th><th>Calls</th>
+                </tr>
+              </thead>
+              <tbody>
+                {aiUsageRows.map(r => (
+                  <tr key={`${r.user_id}-${r.endpoint}`} className="border-t"><td>{r.username || r.user_id}</td><td>{r.endpoint}</td><td>{r.calls}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

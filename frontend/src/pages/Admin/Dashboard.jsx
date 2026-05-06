@@ -65,20 +65,54 @@ export default function Dashboard() {
   const [exporting, setExporting] = useState(false)
   const [aiInsight, setAiInsight] = useState('')
   const [aiInsightLoading, setAiInsightLoading] = useState(false)
+  const aiCacheRef = useRef(new Map())
+  const aiCooldownRef = useRef(0)
 
   const handleAnalyzeDashboard = async () => {
     if (!data) return
+    if (aiInsightLoading) return
+
+    const normalized = {
+      total_revenue: Number(data.products?.total_revenue) || 0,
+      total_commission: Number(data.products?.total_commission) || 0,
+      items_sold: Number(data.products?.sold_count) || 0,
+      items_active: Number(data.products?.active_count) || 0,
+      items_pending: Number(data.products?.pending_count) || 0,
+      period: Number(months) || 1,
+    }
+    const key = `ai:dashboard:${JSON.stringify(normalized)}`
+
+    // Client-side cache (sessionStorage persistence)
+    const cachedSession = sessionStorage.getItem(key)
+    if (cachedSession) {
+      setAiInsight(cachedSession)
+      return
+    }
+    const cached = aiCacheRef.current.get(key)
+    if (cached) {
+      setAiInsight(cached)
+      return
+    }
+
+    // Simple local debounce/cooldown: ignore rapid clicks within 3s
+    const now = Date.now()
+    if (aiCooldownRef.current && now - aiCooldownRef.current < 3000) return
+    aiCooldownRef.current = now
+
     setAiInsightLoading(true)
     try {
       const res = await analyzeDashboard({
-        total_revenue:    data.products?.total_revenue,
-        total_commission: data.products?.total_commission,
-        items_sold:       data.products?.sold_count,
-        items_active:     data.products?.active_count,
-        items_pending:    data.products?.pending_count,
-        period_months:    months,
+        total_revenue:    normalized.total_revenue,
+        total_commission: normalized.total_commission,
+        items_sold:       normalized.items_sold,
+        items_active:     normalized.items_active,
+        items_pending:    normalized.items_pending,
+        period_months:    normalized.period,
       })
-      setAiInsight(res.data.data.summary)
+      const summary = res.data.data.summary
+      aiCacheRef.current.set(key, summary)
+      try { sessionStorage.setItem(key, summary) } catch (e) {}
+      setAiInsight(summary)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Lỗi phân tích AI')
     } finally {

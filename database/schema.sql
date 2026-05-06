@@ -90,6 +90,22 @@ INSERT INTO system_settings (key, value, label, description, is_secret) VALUES
 ON CONFLICT (key) DO NOTHING;
 
 -- ----------------------------------------------------------------
+-- AI USAGE TRACKING
+-- ----------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ai_usage (
+  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+  date       DATE NOT NULL DEFAULT CURRENT_DATE,
+  endpoint   VARCHAR(50) NOT NULL,
+  calls      INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, date, endpoint)
+);
+CREATE INDEX IF NOT EXISTS idx_ai_usage_date_endpoint ON ai_usage(date, endpoint);
+
+
+-- ----------------------------------------------------------------
 -- LOCATIONS
 -- ----------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS locations (

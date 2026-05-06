@@ -45,6 +45,10 @@ Toàn bộ env vars đặt trong **một Vercel project duy nhất** (Production
 | `SMTP_FROM` | `REVA <noreply@reva.vn>` | From address |
 | `LOG_LEVEL` | `info` (prod) / `debug` (dev) | Pino log level |
 
+| `AI_SUGGEST_DAILY_QUOTA` | `100` | Per-user daily quota for `suggest-product` (optional)
+| `AI_ANALYZE_DAILY_QUOTA` | `5` | Per-user daily quota for `analyze-dashboard` (optional)
+| `AI_ANALYZE_CACHE_TTL_MS` | `3600000` | Cache TTL for dashboard analysis in milliseconds (optional)
+
 > **SMTP note:** Nếu không set env vars SMTP, email vẫn có thể cấu hình qua Admin UI → Cài đặt → Hệ thống (lưu trong bảng `system_settings`). Env vars chỉ là fallback khi DB chưa sẵn sàng.
 
 ---

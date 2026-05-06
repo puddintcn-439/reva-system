@@ -39,6 +39,7 @@ export default function Products() {
   const [imageUrl, setImageUrl] = useState('')
   const [exportingInventory, setExportingInventory] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
+  const aiSuggestCacheRef = useRef(new Map())
   const formRef = useRef(null)
 
   const handleExportInventory = async () => {
@@ -65,12 +66,24 @@ export default function Products() {
     const conditionPercent = Number(els['condition_percent']?.value) || 90
     const categoryId = els['category_id']?.value
     const categoryName = categories.find((c) => c.id === categoryId)?.name || ''
+    const key = `ai:suggest:${name}|${conditionPercent}|${categoryName}`
+    const cached = aiSuggestCacheRef.current.get(key) || (() => { try { return JSON.parse(sessionStorage.getItem(key)) } catch { return null } })()
+    if (cached) {
+      if (els['sale_price'])  els['sale_price'].value  = cached.suggested_price
+      if (els['description']) els['description'].value = cached.description
+      toast.success('AI đã gợi ý giá và mô tả (cached)!')
+      return
+    }
+
     setAiLoading(true)
     try {
       const res = await suggestProduct({ name, condition_percent: conditionPercent, category_name: categoryName })
       const { suggested_price, description } = res.data.data
       if (els['sale_price'])  els['sale_price'].value  = suggested_price
       if (els['description']) els['description'].value = description
+      const payload = { suggested_price, description }
+      aiSuggestCacheRef.current.set(key, payload)
+      try { sessionStorage.setItem(key, JSON.stringify(payload)) } catch (e) {}
       toast.success('AI đã gợi ý giá và mô tả!')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Lỗi gọi AI')
